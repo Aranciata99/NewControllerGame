@@ -38,9 +38,6 @@ void draw() {
   //Draw Test Circle
   fill(#000000);
   controllerInput *= 10;
-  
-  //New Player Test
-  rect(10, 10, 10, 10);
  
   circle(width/2, height/2, controllerInput);
 }
