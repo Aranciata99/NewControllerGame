@@ -1,16 +1,33 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+//Classes
+Player Player1;
+
+//Player Values
+float playerSpeed = 0.15;
+
 //Imput Numbers
 String line;
 String poti_value = "110";
 String shake_value = "10";
+
+//Angle
+float betaAngle = 0.0;
+
+//Placeholder Key Input Controll
+float increaseSteps = 1;
+float maxBetaAngle = 1.5;
+float minBetaAngle = -1.5;
 
 //–––
 //Start Function – nur einmal am anfang
 //–––
 
 void setup() {
+  
+  //Classes
+  Player1 = new Player();
   
   //Window Setup
   size(1600, 900);
@@ -41,8 +58,9 @@ void draw() {
   //Draw Test Circle
   fill(#000000);
   controllerInput *= 10;
- 
-  circle(width/2, height/2, controllerInput);
+  
+  Player1.move(playerSpeed, betaAngle);
+  Player1.display();
 }
 
 //–––
@@ -83,3 +101,26 @@ void startBluetoothBridge() {
             e.printStackTrace();
         }
     }
+    
+    
+    //Key Input for Testing
+    void keyPressed() {
+     if(keyCode == 38){
+       if (betaAngle < maxBetaAngle){
+         betaAngle += increaseSteps;
+       } else {
+         betaAngle = maxBetaAngle;
+       }
+      } 
+      
+      if(keyCode == 40){
+        if (betaAngle > minBetaAngle){
+          betaAngle -= increaseSteps;
+        } else {
+          betaAngle = minBetaAngle;
+        }
+    }
+     println("Angle " + betaAngle);
+    
+    }
+    
