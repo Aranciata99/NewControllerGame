@@ -3,7 +3,8 @@ import java.io.InputStreamReader;
 
 //Imput Numbers
 String line;
-String controllerInputString = "10";
+String poti_value = "110";
+String shake_value = "10";
 
 //–––
 //Start Function – nur einmal am anfang
@@ -30,8 +31,10 @@ void draw() {
   
   //Convert Input String to Int
   int controllerInput = 0;
-  if (!controllerInputString.isEmpty()){
-    controllerInput = Integer.parseInt(controllerInputString);
+  int shake = 0;
+  if (!poti_value.isEmpty()){
+    controllerInput = Integer.parseInt(poti_value);
+    shake = Integer.parseInt(shake_value);
   }
   
   
@@ -48,11 +51,10 @@ void draw() {
 
 void startBluetoothBridge() {
         try {
-            System.out.println("Starte Python BLE-Brücke...");
+            System.out.println("Starte Python BLE-Brücke..."); 
             // Absoluten Pfad zur Datei im Sketch-Ordner bauen
             String scriptPath = sketchPath("ble_reader.py");
-
-            ProcessBuilder pb = new ProcessBuilder("python3", scriptPath);
+            ProcessBuilder pb = new ProcessBuilder("/Library/Frameworks/Python.framework/Versions/3.14/bin/python3", scriptPath);
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
@@ -63,8 +65,13 @@ void startBluetoothBridge() {
                 if (line.startsWith("DATA:")) {
                     // HIER KOMMEN DEINE SIGNALE AN!
                     String xiaoSignal = line.substring(5);
-                    controllerInputString = xiaoSignal; 
-                    System.out.println("JAVA EMPFÄNGT SIGNAL: " + xiaoSignal);
+                    if(!(xiaoSignal.isEmpty())){
+                      String regex = ","; // trennargument
+                      String[] myArray = xiaoSignal.split(regex);
+                      poti_value = myArray[0]; //erster Spalte in poti_value
+                      shake_value = myArray[1]; // zweite Spalte in shake_value
+                      System.out.println("Potentiometer: " + poti_value + " Schüttelwert "+ shake_value);
+                    }
                 } else if (line.startsWith("STATUS:")) {
                     // Statusmeldungen (Scannen, Verbinden)
                     System.out.println("BLE-System: " + line.substring(7));
