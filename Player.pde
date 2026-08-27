@@ -21,7 +21,7 @@ class Player {
     if (betaAngle >=360){
       betaAngle -= 360;
     }
-     println("Angle " + betaAngle);
+     println("Angle " + angle);
     
   }
 

@@ -4,6 +4,10 @@ import java.io.InputStreamReader;
 //Classes
 Player Player1;
 
+//controller
+int controllerInput = 0;
+int shake = 0;
+
 //Player Values
 float playerSpeed = 0.15;
 
@@ -12,26 +16,44 @@ String line;
 String poti_value = "110";
 String shake_value = "10";
 
+//Game Sate
+boolean keyboardEnable = false;
+boolean controllerEnable = false;
+
 //Angle
 float betaAngle = 0.0;
 
 //Placeholder Key Input Controll
 float increaseSteps = 1;
-float maxBetaAngle = 1.5;
-float minBetaAngle = -1.5;
+float maxBetaAngle = 2;
+float minBetaAngle = -2;
 
+float potiSteps = maxBetaAngle/(940/2);
+
+//Sate machine
+public enum State {
+    CONTROLLER_SELECT,
+    PLAY_KEYBOARD,
+    PLAY_CONTROLLER
+}
+
+State currentState;
 //–––
 //Start Function – nur einmal am anfang
 //–––
 
 void setup() {
+ 
   
   //Classes
   Player1 = new Player();
   
   //Window Setup
   size(1600, 900);
-   
+  
+  currentState = State.CONTROLLER_SELECT;
+  //screensetting
+  surface.setResizable(true);
   //Start Input Script
   new Thread(() -> {
     startBluetoothBridge();
@@ -43,25 +65,34 @@ void setup() {
 //–––
 
 void draw() {
-  //Draw Background
+   //Draw Background
   background(#FFFFFF);
   
-  //Convert Input String to Int
-  int controllerInput = 0;
-  int shake = 0;
+  switch(currentState) {
+  case CONTROLLER_SELECT:
+  textAlign(LEFT);
+  drawType(width * 0.1);
+  //menue frage controller o oder p
+    break;
+   case PLAY_KEYBOARD:
+    Player1.move(playerSpeed, betaAngle);
+    Player1.display();
+  //game
+    break;
+  case PLAY_CONTROLLER:
+    
   if (!poti_value.isEmpty()){
+    //Convert Input String to Int
     controllerInput = Integer.parseInt(poti_value);
     shake = Integer.parseInt(shake_value);
   }
-  
-  
-  //Draw Test Circle
-  fill(#000000);
-  controllerInput *= 10;
-  
-  Player1.move(playerSpeed, betaAngle);
-  Player1.display();
+   Player1.move(playerSpeed, controllerInput*potiSteps);
+   Player1.display();
+  //game
+    break;
+  }
 }
+
 
 //–––
 //Controller Input Function
@@ -105,22 +136,43 @@ void startBluetoothBridge() {
     
     //Key Input for Testing
     void keyPressed() {
-     if(keyCode == 38){
-       if (betaAngle < maxBetaAngle){
-         betaAngle += increaseSteps;
-       } else {
-         betaAngle = maxBetaAngle;
-       }
-      } 
+      //p = 80
+      //o = 79
+      //Choose BLECONTROLLER or KEYBOARD for game
+      if(currentState == State.CONTROLLER_SELECT){
+      if(keyCode == 80){
+        currentState = State.PLAY_CONTROLLER;
+      }
+      if(keyCode == 79){
+        currentState = State.PLAY_KEYBOARD;
+      }
+      }
       
-      if(keyCode == 40){
-        if (betaAngle > minBetaAngle){
-          betaAngle -= increaseSteps;
-        } else {
-          betaAngle = minBetaAngle;
+      //nur, wenn mit Keyboard gespielt wird
+      if(currentState == State.PLAY_KEYBOARD){
+       if(keyCode == 38){
+         if (betaAngle < maxBetaAngle){
+           betaAngle += increaseSteps;
+         } else {
+           betaAngle = maxBetaAngle;
+         }
+        } 
+        
+        if(keyCode == 40){
+          if (betaAngle > minBetaAngle){
+            betaAngle -= increaseSteps;
+          } else {
+            betaAngle = minBetaAngle;
+          }
+      }
+       //println("Angle " + betaAngle);
         }
     }
-     println("Angle " + betaAngle);
     
+    void drawType(float x) {
+       textSize(100);
+      fill(0);
+      text("p für BLE_Controller", x, 300);
+      text("o für Keyboard", x, 400);
+      
     }
-    
