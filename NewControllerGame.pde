@@ -69,30 +69,30 @@ void draw() {
   background(#FFFFFF);
   
   switch(currentState) {
+    //startfenster
+    //menue frage controller o oder p
   case CONTROLLER_SELECT:
   textAlign(LEFT);
   drawType(width * 0.1);
-  //menue frage controller o oder p
     break;
+    
+    // wenn mit Keyboard gespielt wird
    case PLAY_KEYBOARD:
     Player1.move(playerSpeed, betaAngle);
     Player1.display();
-  //game
     break;
-  case PLAY_CONTROLLER:
     
+    //wen mit BLE Controller gespielt wird
+  case PLAY_CONTROLLER:
   if (!poti_value.isEmpty()){
     //Convert Input String to Int
     controllerInput = Integer.parseInt(poti_value);
     shake = Integer.parseInt(shake_value);
   }
-  
-    potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
-  
+    //konvertierung von potentiometer input zu angle output
+   potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
    Player1.move(playerSpeed, potiConvertetAngle);
    Player1.display();
-   
-  //game
     break;
     
   }
