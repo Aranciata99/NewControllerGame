@@ -29,7 +29,7 @@ float maxBetaAngle = 2;
 float minBetaAngle = -2;
 
 float potiSteps = maxBetaAngle/(940/2);
-
+float potiConvertetAngle = 0.0;
 //Sate machine
 public enum State {
     CONTROLLER_SELECT,
@@ -86,10 +86,15 @@ void draw() {
     controllerInput = Integer.parseInt(poti_value);
     shake = Integer.parseInt(shake_value);
   }
-   Player1.move(playerSpeed, controllerInput*potiSteps);
+  
+    potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
+  
+   Player1.move(playerSpeed, potiConvertetAngle);
    Player1.display();
+   
   //game
     break;
+    
   }
 }
 
