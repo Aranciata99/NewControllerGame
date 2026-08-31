@@ -1,15 +1,17 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+
 //Classes
 Player Player1;
+//Player Player2;
 
 //controller
 int controllerInput = 0;
 int shake = 0;
 
 //Player Values
-float playerSpeed = 0.15;
+float playerSpeed = 0.5;
 
 //Imput Numbers
 String line;
@@ -43,10 +45,10 @@ State currentState;
 //–––
 
 void setup() {
- 
-  
+   rectMode(CENTER);
   //Classes
-  Player1 = new Player();
+  Player1 = new Player(#FF704F);
+  //Player2 = new Player(#FF70FF);
   
   //Window Setup
   size(1600, 900);
@@ -80,6 +82,8 @@ void draw() {
    case PLAY_KEYBOARD:
     Player1.move(playerSpeed, betaAngle);
     Player1.display();
+    //Player2.move(playerSpeed, betaAngle);
+    //Player2.display();
     break;
     
     //wen mit BLE Controller gespielt wird
@@ -96,6 +100,7 @@ void draw() {
     break;
     
   }
+   
 }
 
 
@@ -175,9 +180,8 @@ void startBluetoothBridge() {
     }
     
     void drawType(float x) {
-       textSize(100);
+      textSize(100);
       fill(0);
       text("p für BLE_Controller", x, 300);
       text("o für Keyboard", x, 400);
-      
     }
