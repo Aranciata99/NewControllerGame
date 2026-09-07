@@ -1,22 +1,23 @@
 class Player {
   
   color playerColor;
+  float xPos;
+  float yPos;
+  float playerSize;
+  float betaAngle;
+  //int yDirection = 0;
+  //int xDirection = 0;
+  float globAngle;
   
- Player(color c) {
+ Player(color c, float startPosX, float startPosY) {
     playerColor = c;
-   
+    xPos = startPosX;
+    yPos = startPosY;
+    playerSize = 40;
+    betaAngle = 0;
   }
   
-  float playerSize = 20;
-  //color playerColor = #FF704F;
-  float xPos = 0;
-  float yPos = 0;
   
-  float betaAngle = 0;
-  
-  int yDirection = 0;
-  int xDirection = 0;
-  float globAngle;
   void move (float speed, float angle) {
     globAngle = angle;
     betaAngle += angle;
@@ -26,22 +27,24 @@ class Player {
     if (betaAngle >=360){
       betaAngle -= 360;
     }
-     println("Angle " + angle);
-    
+     //println("Angle " + angle);
   }
 
   void display () {
-    //display Player
+    pushMatrix();
     noStroke();
-    fill(playerColor); 
+    fill(playerColor);
     translate(xPos, yPos);
     rotate(radians(-betaAngle));
     rect(0, 0, playerSize, playerSize);
-     fill(0);
-     rotate(radians(45));
-    rect(playerSize/2,playerSize/2,playerSize/sqrt(2),playerSize/sqrt(2));
-    translate(-xPos, -yPos);
-    rotate(radians(-45));
-    rotate(radians(betaAngle));
+    fill(0);
+    rotate(radians(45));
+    rect(
+      playerSize / 2,
+      playerSize / 2,
+      playerSize / sqrt(2),
+      playerSize / sqrt(2)
+    );
+    popMatrix();
   }
 }

@@ -1,10 +1,22 @@
+/*To-Dos
+
+– Behavior when touching side –> spawn on other side?
+– Shaking Mechanics
+– 
+
+*/
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-
 //Classes
+int playerCount = 1;
 Player Player1;
-//Player Player2;
+Player Player2;
+
+//Angles
+float betaAnglePlayer1 = 0.0;
+float betaAnglePlayer2 = 0.0;
 
 //controller
 int controllerInput = 0;
@@ -21,9 +33,6 @@ String shake_value = "10";
 //Game Sate
 boolean keyboardEnable = false;
 boolean controllerEnable = false;
-
-//Angle
-float betaAngle = 0.0;
 
 //Placeholder Key Input Controll
 float increaseSteps = 1;
@@ -45,10 +54,10 @@ State currentState;
 //–––
 
 void setup() {
-   rectMode(CENTER);
+  rectMode(CENTER);
   //Classes
-  Player1 = new Player(#FF704F);
-  //Player2 = new Player(#FF70FF);
+  Player1 = new Player(#FF704F, 100, height/2);
+  Player2 = new Player(#FF70FF, width-100, height/2);
   
   //Window Setup
   size(1600, 900);
@@ -80,10 +89,10 @@ void draw() {
     
     // wenn mit Keyboard gespielt wird
    case PLAY_KEYBOARD:
-    Player1.move(playerSpeed, betaAngle);
-    Player1.display();
-    //Player2.move(playerSpeed, betaAngle);
-    //Player2.display();
+     Player1.move(playerSpeed, betaAnglePlayer1);
+     Player1.display();
+     Player2.move(playerSpeed, betaAnglePlayer2);
+     Player2.display();
     break;
     
     //wen mit BLE Controller gespielt wird
@@ -143,8 +152,7 @@ void startBluetoothBridge() {
         }
     }
     
-    
-    //Key Input for Testing
+    //Key Inputs
     void keyPressed() {
       //p = 80
       //o = 79
@@ -158,26 +166,49 @@ void startBluetoothBridge() {
       }
       }
       
+      //Keyboard Inputs
       //nur, wenn mit Keyboard gespielt wird
       if(currentState == State.PLAY_KEYBOARD){
+        
+        //player 2 // Up + Down
+        
        if(keyCode == 38){
-         if (betaAngle < maxBetaAngle){
-           betaAngle += increaseSteps;
+         if (betaAnglePlayer1 < maxBetaAngle){
+           betaAnglePlayer1 += increaseSteps;
          } else {
-           betaAngle = maxBetaAngle;
+           betaAnglePlayer1 = maxBetaAngle;
          }
         } 
         
         if(keyCode == 40){
-          if (betaAngle > minBetaAngle){
-            betaAngle -= increaseSteps;
+          if (betaAnglePlayer1 > minBetaAngle){
+            betaAnglePlayer1 -= increaseSteps;
           } else {
-            betaAngle = minBetaAngle;
+            betaAnglePlayer1 = minBetaAngle;
           }
-      }
-       //println("Angle " + betaAngle);
-        }
-    }
+         }
+         
+         //player 2 // W + S
+         
+         if(keyCode == 83){
+         if (betaAnglePlayer2 < maxBetaAngle){
+           betaAnglePlayer2 += increaseSteps;
+         } else {
+           betaAnglePlayer2 = maxBetaAngle;
+         }
+        } 
+        
+        if(keyCode == 87){
+          if (betaAnglePlayer2 > minBetaAngle){
+            betaAnglePlayer2 -= increaseSteps;
+          } else {
+            betaAnglePlayer2 = minBetaAngle;
+          }
+         }
+         
+       println(keyCode);
+     }
+   }
     
     void drawType(float x) {
       textSize(100);
