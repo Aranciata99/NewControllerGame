@@ -2,7 +2,8 @@
 
 – Behavior when touching side –> spawn on other side?
 – Shaking Mechanics
-– 
+– Screens (Game States)
+– Buttons UI
 
 */
 
@@ -10,7 +11,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 //Classes
-int playerCount = 1;
+int playerCount = 2;
 Player Player1;
 Player Player2;
 
@@ -49,6 +50,7 @@ public enum State {
 }
 
 State currentState;
+
 //–––
 //Start Function – nur einmal am anfang
 //–––
