@@ -1,9 +1,9 @@
-/*To-Dos
+/* Current To-Dos
 
-– Behavior when touching side –> spawn on other side?
-– Shaking Mechanics
-– Screens (Game States)
-– Buttons UI
+Basil
+– Movement to the edge
+
+Alex
 
 */
 
@@ -12,19 +12,24 @@ import java.io.InputStreamReader;
 
 //Classes
 int playerCount = 2;
-Player Player1;
-Player Player2;
+Player PlayerSmall;
+Player PlayerBig;
 
 //Angles
-float betaAnglePlayer1 = 0.0;
-float betaAnglePlayer2 = 0.0;
+float betaAnglePlayerSmall = 0.0;
+float betaAnglePlayerBig = 0.0;
 
 //controller
 int controllerInput = 0;
 int shake = 0;
 
 //Player Values
-float playerSpeed = 0.5;
+//Size
+float playerSpeedSmall = 0.25;
+float playerSpeedBig = 0.75;
+//Size
+float playerSizeSmall = 40;
+float playerSizeBig = 160;
 
 //Imput Numbers
 String line;
@@ -49,6 +54,13 @@ public enum State {
     PLAY_CONTROLLER
 }
 
+//UI
+float generallMargin = 30;
+//Text 
+float lineHeight = 18;
+float fontSize = 15;
+String[] textBlock;
+
 State currentState;
 
 //–––
@@ -57,9 +69,8 @@ State currentState;
 
 void setup() {
   rectMode(CENTER);
-  //Classes
-  Player1 = new Player(#FF704F, 100, height/2);
-  Player2 = new Player(#FF70FF, width-100, height/2);
+  //Instantiate Classes
+  setupStart();
   
   //Window Setup
   size(1600, 900);
@@ -73,28 +84,68 @@ void setup() {
   }).start();
 }
 
+void setupStart(){
+  //Inst. Players
+  PlayerSmall = new Player(220, 230, 240, playerSizeSmall, 100, height/2);
+  PlayerBig = new Player(250, 100, 0, playerSizeBig, width-100, height/2);
+  betaAnglePlayerSmall = 0.0;
+  betaAnglePlayerBig = 0.0;
+}
+
 //–––
 //Draw Function – 60 mal in der Sekunde
 //–––
 
 void draw() {
    //Draw Background
-  background(#FFFFFF);
+  background(#002138);
   
   switch(currentState) {
     //startfenster
     //menue frage controller o oder p
   case CONTROLLER_SELECT:
-  textAlign(LEFT);
-  drawType(width * 0.1);
+  
+  //–––
+  //Text Block Settings
+  textBlock = new String[]{
+  "START GAME",
+  "",
+  "O > Keyboard",
+  "P > BLE_Controller",
+  };
+  drawType(textBlock, generallMargin, generallMargin);
+  
     break;
     
     // wenn mit Keyboard gespielt wird
    case PLAY_KEYBOARD:
-     Player1.move(playerSpeed, betaAnglePlayer1);
-     Player1.display();
-     Player2.move(playerSpeed, betaAnglePlayer2);
-     Player2.display();
+     PlayerSmall.move(playerSpeedSmall, betaAnglePlayerSmall);
+     PlayerSmall.display();
+     PlayerBig.move(playerSpeedBig, betaAnglePlayerBig);
+     PlayerBig.display();
+     
+     //–––
+     //Text Block Settings
+     textBlock = new String[]{
+     "SETTINGS",
+     "",
+     "R > Restart",
+     };
+     drawType(textBlock, generallMargin, generallMargin);
+     //–––
+     //Text Block Settings
+     textBlock = new String[]{
+     "DEBUG UI",
+     "",
+     "SMALL PLAYER", 
+     "Angle " + str(betaAnglePlayerSmall),
+     "BIG PLAYER", 
+     "Angle "+ str(betaAnglePlayerBig),
+     };
+     drawType(textBlock, width/2, generallMargin);
+     //–––
+     
+     
     break;
     
     //wen mit BLE Controller gespielt wird
@@ -106,14 +157,13 @@ void draw() {
   }
     //konvertierung von potentiometer input zu angle output
    potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
-   Player1.move(playerSpeed, potiConvertetAngle);
-   Player1.display();
+   PlayerSmall.move(playerSpeedSmall, potiConvertetAngle);
+   PlayerSmall.display();
     break;
     
   }
    
 }
-
 
 //–––
 //Controller Input Function
@@ -155,6 +205,7 @@ void startBluetoothBridge() {
     }
     
     //Key Inputs
+    //UI StartScreen
     void keyPressed() {
       //p = 80
       //o = 79
@@ -167,54 +218,60 @@ void startBluetoothBridge() {
         currentState = State.PLAY_KEYBOARD;
       }
       }
-      
-      //Keyboard Inputs
+      //Gameplay Keyboard Inputs
       //nur, wenn mit Keyboard gespielt wird
       if(currentState == State.PLAY_KEYBOARD){
         
         //player 2 // Up + Down
         
        if(keyCode == 38){
-         if (betaAnglePlayer1 < maxBetaAngle){
-           betaAnglePlayer1 += increaseSteps;
+         if (betaAnglePlayerSmall < maxBetaAngle){
+           betaAnglePlayerSmall += increaseSteps;
          } else {
-           betaAnglePlayer1 = maxBetaAngle;
+           betaAnglePlayerSmall = maxBetaAngle;
          }
         } 
         
         if(keyCode == 40){
-          if (betaAnglePlayer1 > minBetaAngle){
-            betaAnglePlayer1 -= increaseSteps;
+          if (betaAnglePlayerSmall > minBetaAngle){
+            betaAnglePlayerSmall -= increaseSteps;
           } else {
-            betaAnglePlayer1 = minBetaAngle;
+            betaAnglePlayerSmall = minBetaAngle;
           }
          }
          
          //player 2 // W + S
          
          if(keyCode == 83){
-         if (betaAnglePlayer2 < maxBetaAngle){
-           betaAnglePlayer2 += increaseSteps;
+         if (betaAnglePlayerBig < maxBetaAngle){
+           betaAnglePlayerBig += increaseSteps;
          } else {
-           betaAnglePlayer2 = maxBetaAngle;
+           betaAnglePlayerBig = maxBetaAngle;
          }
         } 
         
         if(keyCode == 87){
-          if (betaAnglePlayer2 > minBetaAngle){
-            betaAnglePlayer2 -= increaseSteps;
+          if (betaAnglePlayerBig > minBetaAngle){
+            betaAnglePlayerBig -= increaseSteps;
           } else {
-            betaAnglePlayer2 = minBetaAngle;
+            betaAnglePlayerBig = minBetaAngle;
           }
          }
+        
+        //Restart Button
+        if(keyCode == 82){
+          setupStart();
+        }
          
        println(keyCode);
      }
    }
     
-    void drawType(float x) {
-      textSize(100);
-      fill(0);
-      text("p für BLE_Controller", x, 300);
-      text("o für Keyboard", x, 400);
+    void drawType(String[] text, float x, float y) {
+      textAlign(LEFT);
+      textSize(fontSize);
+      fill(#FFFFFF);
+      for (int i = 0; i < text.length; i++) {
+        text(text[i], x, y + (i * lineHeight));
+      } 
     }
