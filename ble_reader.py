@@ -5,36 +5,54 @@ from bleak import BleakClient, BleakScanner
 # Die TX-Charakteristik, über die der XIAO sendet
 UART_TX_CHAR_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
-async def main():
-    print("STATUS: Scanne nach XIAO...", flush=True)
-    devices = await BleakScanner.discover(timeout=5.0)
+# Namen der Geräte, mit denen du verbinden möchtest
+TARGET_DEVICES = ["Mein_Akku_nRF52_1", "Mein_Akku_nRF52_2"]
+
+async def connect_and_listen(device):
+    """Baut die Verbindung zu einem einzelnen Gerät auf und hält sie."""
+    print(f"STATUS: Verbinde mit {device.name} ({device.address})...", flush=True)
     
-    xiao_device = None
-    for d in devices:
-        # Sucht nach einem Gerät, das "XIAO" im Namen hat
-        if d.name and "Mein_Akku_nRF52" in d.name: 
-            xiao_device = d
-            break
+    try:
+        async with BleakClient(device.address) as client:
+            print(f"STATUS: Verbunden mit {device.name}! Warte auf Daten...", flush=True)
             
-    if not xiao_device:
-        print("STATUS: Kein XIAO in der Nähe gefunden.", flush=True)
+            def callback(sender, data):
+                # Wir nutzen exakt das alte Format (DATA:), 
+                # da der Akku selbst die 1 oder 2 sendet und Java das aufteilt
+                decoded_data = data.decode('utf-8').strip()
+                print(f"DATA:{decoded_data}", flush=True)
+
+            await client.start_notify(UART_TX_CHAR_UUID, callback)
+            
+            # Verbindung unendlich lange offen halten
+            while True:
+                await asyncio.sleep(1)
+                
+    except Exception as e:
+        print(f"STATUS: Verbindung zu {device.name} getrennt/fehlgeschlagen: {e}", flush=True)
+
+async def main():
+    print("STATUS: Scanne nach XIAO Geräten (15 Sekunden Suchzeit)...", flush=True)
+    devices = await BleakScanner.discover(timeout=15.0)
+    
+    print("STATUS: --- ALLE GEFUNDENEN GERÄTE ---", flush=True)
+    target_devices_found = []
+    for d in devices:
+        # Gibt jedes gefundene Gerät mit Namen aus, um den exakten String zu sehen
+        if d.name:
+            print(f"STATUS: Gefunden -> '{d.name}'", flush=True)
+            if d.name in TARGET_DEVICES: 
+                target_devices_found.append(d)
+    print("STATUS: ------------------------------", flush=True)
+            
+    if not target_devices_found:
+        print("STATUS: Keine Ziel-Akkus in der Nähe gefunden.", flush=True)
         return
 
-    print(f"STATUS: Gefunden: {xiao_device.name}. Verbinde...", flush=True)
+    print(f"STATUS: {len(target_devices_found)} Ziel-Gerät(e) gefunden. Starte Verbindungen...", flush=True)
     
-    async with BleakClient(xiao_device.address) as client:
-        print("STATUS: Verbunden! Warte auf Daten...", flush=True)
-        
-        # Wird immer ausgelöst, wenn der XIAO ein Signal schickt
-        def callback(sender, data):
-            # Wir drucken "DATA:" davor, damit dein Java-Programm das Signal erkennt
-            print(f"DATA:{data.decode('utf-8').strip()}", flush=True)
-
-        await client.start_notify(UART_TX_CHAR_UUID, callback)
-        
-        # Verbindung unendlich lange offen halten
-        while True:
-            await asyncio.sleep(1)
+    tasks = [connect_and_listen(dev) for dev in target_devices_found]
+    await asyncio.gather(*tasks)
 
 # Skript starten
 try:

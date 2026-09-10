@@ -25,7 +25,6 @@ class PlayerBig {
     track = random;
     playerSize = size;
     
-    println(random);
   }
   
   void move (float speed) {
@@ -69,7 +68,7 @@ class PlayerBig {
         track --;
       }
     }
-      println(track);
+      //println(track);
   }
 
   void display () {

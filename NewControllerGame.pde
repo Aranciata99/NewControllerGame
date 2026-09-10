@@ -19,8 +19,11 @@ float betaAnglePlayerSmall = 0.0;
 float betaAnglePlayerBig = 0.0; //Speed
 
 //controller
-int controllerInput = 0;
-int shake = 0;
+int controllerInput_2;
+int shake_2 = 0;
+
+int controllerInput_1 = 0;
+int shake_1 = 0;
 
 //Player Values
 //Speed
@@ -34,9 +37,11 @@ color playerColorBig = #ed4d0e;
 
 //Imput Numbers
 String line;
-String poti_value = "110";
-String shake_value = "10";
+String controllerIndex ="1";
+String poti_value_1 = "110";
+String shake_value_1 = "10";
 
+String poti_value_2 = "0", shake_value_2 = "0";
 //Envoirenment
 color backgroundColor = #002138;
 
@@ -81,8 +86,8 @@ void setup() {
   size(1600, 900);
   
   //State Setup
-  //currentState = State.CONTROLLER_SELECT;
-  currentState = State.PLAY_KEYBOARD;
+  currentState = State.CONTROLLER_SELECT;
+  //currentState = State.PLAY_KEYBOARD;
   //screensetting
   surface.setResizable(true);
   //Start Input Script
@@ -158,15 +163,23 @@ void draw() {
 
     //wen mit BLE Controller gespielt wird
   case PLAY_CONTROLLER:
-    if (!poti_value.isEmpty()) {
+    if (!poti_value_1.isEmpty()) {
       //Convert Input String to Int
-      controllerInput = Integer.parseInt(poti_value);
-      shake = Integer.parseInt(shake_value);
+      controllerInput_1 = Integer.parseInt(poti_value_1);
+      shake_1 = Integer.parseInt(shake_value_1);
+    }
+    if (!poti_value_2.isEmpty()) {
+      //Convert Input String to Int
+      controllerInput_2 = Integer.parseInt(poti_value_2);
+      shake_2 = Integer.parseInt(shake_value_2);
     }
     //konvertierung von potentiometer input zu angle output
-    potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
+    potiConvertetAngle = minBetaAngle + (controllerInput_1*potiSteps);
     PlayerSmall.move(playerSpeedSmall, potiConvertetAngle);
     PlayerSmall.display(backgroundColor);
+    betaAnglePlayerBig = minBetaAngle + (controllerInput_2*potiSteps);
+    PlayerBig.move(betaAnglePlayerBig);
+    PlayerBig.display();
     break;
   }
 }
@@ -176,39 +189,62 @@ void draw() {
 //–––
 
 void startBluetoothBridge() {
-  try {
-    System.out.println("Starte Python BLE-Brücke...");
-    // Absoluten Pfad zur Datei im Sketch-Ordner bauen
-    String scriptPath = sketchPath("ble_reader.py");
-    ProcessBuilder pb = new ProcessBuilder("/Library/Frameworks/Python.framework/Versions/3.14/bin/python3", scriptPath);
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
+  // Starte einen neuen Thread, damit die while-Schleife das Hauptprogramm nicht blockiert
+  Thread bleThread = new Thread(new Runnable() {
+    public void run() {
+      try {
+        System.out.println("Starte Python BLE-Brücke im Hintergrund...");
+        String scriptPath = sketchPath("ble_reader.py");
+        ProcessBuilder pb = new ProcessBuilder("/Library/Frameworks/Python.framework/Versions/3.14/bin/python3", scriptPath);
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
 
-    // Wir lesen live den Output von Python
-    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
 
-    while ((line = reader.readLine()) != null) {
-      if (line.startsWith("DATA:")) {
-        // HIER KOMMEN DEINE SIGNALE AN!
-        String xiaoSignal = line.substring(5);
-        if (!(xiaoSignal.isEmpty())) {
-          String regex = ","; // trennargument
-          String[] myArray = xiaoSignal.split(regex);
-          poti_value = myArray[0]; //erster Spalte in poti_value
-          shake_value = myArray[1]; // zweite Spalte in shake_value
-          System.out.println("Potentiometer: " + poti_value + " Schüttelwert "+ shake_value);
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("DATA:")) {
+            String xiaoSignal = line.substring(5);
+            if (!(xiaoSignal.isEmpty())) {
+              String[] myArray = xiaoSignal.split(",");
+              
+              // Sicherheitscheck: Verhindert Abstürze, falls mal ein kaputter String ankommt
+              if (myArray.length >= 3) { 
+                String controllerIndex = myArray[0];
+                
+                switch (controllerIndex) {
+                  case "1":
+                    poti_value_1 = myArray[1];
+                    shake_value_1 = myArray[2];
+                    System.out.println("Controller 1 (klein) -> Poti: " + poti_value_1 + " | Shake: " + shake_value_1);
+                    break;
+                  case "2":
+                    poti_value_2 = myArray[1];
+                    shake_value_2 = myArray[2];
+                    System.out.println("Controller 2 (groß) -> Poti: " + poti_value_2 + " | Shake: " + shake_value_2);
+                    break;
+                  default:
+                    System.out.println("Unbekannte Controller-ID: " + controllerIndex);
+                    break;
+                }
+              }
+            }
+          } else if (line.startsWith("STATUS:")) {
+            System.out.println("BLE-System: " + line.substring(7));
+          } else {
+            System.out.println("Log: " + line);
+          }
         }
-      } else if (line.startsWith("STATUS:")) {
-        // Statusmeldungen (Scannen, Verbinden)
-        System.out.println("BLE-System: " + line.substring(7));
-      } else {
-        System.out.println("Log: " + line);
+      } catch (Exception e) {
+        System.out.println("Fehler in der BLE-Brücke: " + e.getMessage());
+        e.printStackTrace();
       }
     }
-  }
-  catch (Exception e) {
-    e.printStackTrace();
-  }
+  });
+  
+  // Starte den Thread
+  bleThread.start();
+
 }
 
 //Key Inputs
