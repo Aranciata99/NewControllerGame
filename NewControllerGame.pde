@@ -190,20 +190,11 @@ void draw() {
       shake_2 = Integer.parseInt(shake_value_2);
     }
     //konvertierung von potentiometer input zu angle output
-<<<<<<< Updated upstream
     potiConvertetAngle = minBetaAngle + (controllerInput_1*potiSteps);
-    PlayerSmall.move(playerSpeedSmall, potiConvertetAngle);
-    PlayerSmall.display(backgroundColor);
-    betaAnglePlayerBig = minBetaAngle + (controllerInput_2*potiSteps);
-    PlayerBig.move(betaAnglePlayerBig);
-    PlayerBig.display();
-=======
-    potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
     for (int p = 0; p < player.length; p++) {
       player[p].move(playerSpeed[p], potiConvertetAngle);
       player[p].display(backgroundColor, abilityCounter[p]);
     }
->>>>>>> Stashed changes
     break;
   }
 }
