@@ -11,12 +11,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 //Classes
-PlayerSmall PlayerSmall;
-PlayerBig PlayerBig;
+Player[] player = new Player[2];
 
 //Angles
-float betaAnglePlayerSmall = 0.0;
-float betaAnglePlayerBig = 0.0; //Speed
+float[] betaAngles = { 0.0, 0.0 };
 
 //controller
 int controllerInput_2;
@@ -26,14 +24,28 @@ int controllerInput_1 = 0;
 int shake_1 = 0;
 
 //Player Values
+//Abilities
+int[] abilityCounter = { 3 /*max 10*/, 100 /*max ?*/};
+//Shaking
+boolean[] isShaking = { false, false };
+boolean[] shakeCooldown = { false, false };
+boolean[] abilityUse = { false, false };
+int[] shakeState = { 0, 0 };
+int[] shakeCap = { 150, 150 };
 //Speed
-float playerSpeedSmall = 0.25;
+float[] playerSpeedAbs = { 0.25, 0 };
+float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
 //Size
-float playerSizeSmall = 40;
-float playerSizeBig = 80;
+float[] playerSize = { 40, 80 };
 //Colors
-color playerColorSmall = #c9c9c9;
-color playerColorBig = #ed4d0e;
+color[] playerColor = { #c9c9c9, #ed4d0e};
+//Inputs
+int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 16 /*SHIFT R*/}, { 83 /*W*/, 87 /*S*/, 32 /*SPACE*/}};
+
+//Placeholder Key Input Controll
+float[] increaseSteps = { 0.5, 0.5 };
+float maxBetaAngle = 2;
+float minBetaAngle = -2;
 
 //Imput Numbers
 String line;
@@ -49,14 +61,13 @@ color backgroundColor = #002138;
 boolean keyboardEnable = false;
 boolean controllerEnable = false;
 
-//Placeholder Key Input Controll
-float increaseStepsSmall = 0.5;
-float increaseStepsBig = 0.5;
-float maxBetaAngle = 2;
-float minBetaAngle = -2;
-
 float potiSteps = maxBetaAngle/(940/2);
 float potiConvertetAngle = 0.0;
+
+//UI
+TextBlock TextBlock;
+String[] text;
+
 //Sate machine
 public enum State {
   CONTROLLER_SELECT,
@@ -65,10 +76,9 @@ public enum State {
 }
 
 //UI
-float generallMargin = 30;
+
 //Text
-float lineHeight = 18;
-float fontSize = 15;
+float generallMargin = 30;
 String[] textBlock;
 
 State currentState;
@@ -84,7 +94,7 @@ void setup() {
 
   //Window Setup
   size(1600, 900);
-  
+
   //State Setup
   currentState = State.CONTROLLER_SELECT;
   //currentState = State.PLAY_KEYBOARD;
@@ -99,10 +109,10 @@ void setup() {
 
 void setupStart() {
   //Inst. Players
-  PlayerSmall = new PlayerSmall(playerColorSmall, playerSizeSmall);
-  PlayerBig = new PlayerBig(playerColorBig, playerSizeBig);
-  betaAnglePlayerSmall = 0.0;
-  betaAnglePlayerBig = 0.0;
+  player[0] = new PlayerSmall(playerColor[0], playerSize[0]);
+  player[1] = new PlayerBig(playerColor[1], playerSize[1]);
+  betaAngles = new float[]{ 0.0, 0.0 };
+  TextBlock = new TextBlock();
 }
 
 //–––
@@ -118,45 +128,51 @@ void draw() {
     //menue frage controller o oder p
   case CONTROLLER_SELECT:
 
-    //–––
-    //Text Block Settings
-    textBlock = new String[]{
+    text = new String[]{
       "START GAME",
       "",
       "O > Keyboard",
       "P > BLE_Controller",
     };
-    drawType(textBlock, generallMargin, generallMargin);
+    TextBlock.display(text, generallMargin, generallMargin);
 
     break;
 
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
-    PlayerSmall.move(playerSpeedSmall, betaAnglePlayerSmall);
-    PlayerSmall.display(backgroundColor);
-    PlayerBig.move(betaAnglePlayerBig);
-    PlayerBig.display();
 
-    //–––
-    //Text Block Settings
-    textBlock = new String[]{
+    //Display Player
+    for (int p = 0; p < player.length; p++) {
+      player[p].move(playerSpeed[p], betaAngles[p]);
+      player[p].display(backgroundColor, abilityCounter[p]);
+      ability(p);
+    }
+
+    shake();
+
+    //Settings Text
+    text = new String[]{
       "SETTINGS",
       "",
       "R > Restart",
     };
-    drawType(textBlock, generallMargin, generallMargin);
-    //–––
-    //Text Block Settings
-    textBlock = new String[]{
-      "DEBUG UI",
+    TextBlock.display(text, generallMargin, generallMargin);
+
+    //Debug Text
+    text = new String[]{
+      "GAME VALUES",
       "",
-      "SMALL PLAYER",
-      "Angle " + str(betaAnglePlayerSmall),
-      "BIG PLAYER",
-      "Angle "+ str(betaAnglePlayerBig),
+      "PLAYER SMALL",
+      "ANGLE " + betaAngles[0],
+      "SPEED " + playerSpeed[0],
+      "ABILITY USE " + abilityCounter[0],
+      "SHAKE " + shakeState[0],
+      "",
+      "PLAYER BIG",
+      "Speed " + betaAngles[1],
+      "SHAKE " + shakeState[1],
     };
-    drawType(textBlock, width/2, generallMargin);
-    //–––
+    TextBlock.display(text, width / 3 * 2, generallMargin);
 
 
     break;
@@ -174,12 +190,20 @@ void draw() {
       shake_2 = Integer.parseInt(shake_value_2);
     }
     //konvertierung von potentiometer input zu angle output
+<<<<<<< Updated upstream
     potiConvertetAngle = minBetaAngle + (controllerInput_1*potiSteps);
     PlayerSmall.move(playerSpeedSmall, potiConvertetAngle);
     PlayerSmall.display(backgroundColor);
     betaAnglePlayerBig = minBetaAngle + (controllerInput_2*potiSteps);
     PlayerBig.move(betaAnglePlayerBig);
     PlayerBig.display();
+=======
+    potiConvertetAngle = minBetaAngle + (controllerInput*potiSteps);
+    for (int p = 0; p < player.length; p++) {
+      player[p].move(playerSpeed[p], potiConvertetAngle);
+      player[p].display(backgroundColor, abilityCounter[p]);
+    }
+>>>>>>> Stashed changes
     break;
   }
 }
@@ -247,7 +271,10 @@ void startBluetoothBridge() {
 
 }
 
+//––
 //Key Inputs
+//––
+
 //UI StartScreen
 void keyPressed() {
   //p = 80
@@ -261,58 +288,111 @@ void keyPressed() {
       currentState = State.PLAY_KEYBOARD;
     }
   }
+
+  //Restart Button
+  if (keyCode == 82) {
+    setupStart();
+  }
+
   //Gameplay Keyboard Inputs
   //nur, wenn mit Keyboard gespielt wird
   if (currentState == State.PLAY_KEYBOARD) {
 
-    //player 2 // Up + Down
-
-    if (keyCode == 38) {
-      if (betaAnglePlayerSmall < maxBetaAngle) {
-        betaAnglePlayerSmall += increaseStepsSmall;
-      } else {
-        betaAnglePlayerSmall = maxBetaAngle;
+    for (int p = 0; p < player.length; p++) {
+      if (keyCode == playerKeyInputs[p][0]) {
+        if (betaAngles[p] < maxBetaAngle) {
+          betaAngles[p] += increaseSteps[p];
+        } else {
+          betaAngles[p] = maxBetaAngle;
+        }
       }
-    }
 
-    if (keyCode == 40) {
-      if (betaAnglePlayerSmall > minBetaAngle) {
-        betaAnglePlayerSmall -= increaseStepsSmall;
-      } else {
-        betaAnglePlayerSmall = minBetaAngle;
+      if (keyCode == playerKeyInputs[p][1]) {
+        if (betaAngles[p] > minBetaAngle) {
+          betaAngles[p] -= increaseSteps[p];
+        } else {
+          betaAngles[p] = minBetaAngle;
+        }
       }
-    }
 
-    //player 2 // W + S
-
-    if (keyCode == 83) {
-      if (betaAnglePlayerBig < maxBetaAngle) {
-        betaAnglePlayerBig += increaseStepsBig;
-      } else {
-        betaAnglePlayerBig = maxBetaAngle;
+      //small Is shaking
+      if (keyCode == playerKeyInputs[p][2] && abilityCounter[0] > 0) {
+        isShaking[p] = true;
       }
-    }
-
-    if (keyCode == 87) {
-      if (betaAnglePlayerBig > minBetaAngle) {
-        betaAnglePlayerBig -= increaseStepsBig;
-      } else {
-        betaAnglePlayerBig = minBetaAngle;
-      }
-    }
-
-    //Restart Button
-    if (keyCode == 82) {
-      setupStart();
     }
   }
 }
 
-void drawType(String[] text, float x, float y) {
-  textAlign(LEFT);
-  textSize(fontSize);
-  fill(#FFFFFF);
-  for (int i = 0; i < text.length; i++) {
-    text(text[i], x, y + (i * lineHeight));
+void keyReleased() {
+  for (int p = 0; p < player.length; p++) {
+    if (keyCode == playerKeyInputs[p][2]) {
+      isShaking[p] = false;
+    }
+  }
+}
+
+void shake() {
+  for (int p = 0; p < player.length; p++) {
+    shakeState[p] += isShaking[p] && !shakeCooldown[p] ? 1 : -1;
+    shakeState[p] = constrain(shakeState[p], 0, shakeCap[p]);
+    //slow Down Big when shaked
+    if (p == 1 && isShaking[p] && !shakeCooldown[p]) {
+      if (betaAngles[p] > 0.1) {
+        betaAngles[p] -= 0.02;
+      } else if (betaAngles[p] < -0.1) {
+        betaAngles[p] += 0.02;
+      } else {
+        betaAngles[p] = 0.0;
+      }
+    }
+    //Execute
+    if (shakeState[p] == shakeCap[p] && abilityCounter[0] > 0) {
+      shakeCooldown[p] = true;
+      abilityUse[p] = true;
+      if (abilityCounter[p] != 0) {
+        abilityCounter[p]--;
+      }
+    }
+
+    if (shakeCooldown[p] && shakeState[p] <= 0 && !isShaking[p]) {
+      shakeCooldown[p] = false;
+    }
+  }
+}
+
+float explosionExpansion = playerSize[0];
+float explosionDuration = 255;
+
+void ability(int p) {
+  //Plyer Small – Speed Up
+  if (p == 0) {
+    if (abilityUse[p]) {
+      if (playerSpeed[p] >= 0.02) {
+        playerSpeed[p] -= 0.01;
+      } else {
+        abilityUse[p] = false;
+      }
+    } else {
+      if (playerSpeed[p] <= playerSpeedAbs[p]) {
+        playerSpeed[p] += 0.01;
+      }
+    }
+  }
+
+  //Plyer Small – Expload
+  if (p == 1) {
+    if (abilityUse[p]) {
+      if (explosionDuration > 0) {
+        if (explosionExpansion <= height * 1.5) {
+          explosionExpansion += 75;
+        }
+        explosionDuration -= 3;
+        player[p].explosion(explosionExpansion, explosionDuration);
+      } else {
+        abilityUse[p] = false;
+        explosionExpansion = playerSize[0];
+        explosionDuration = 255;
+      }
+    }
   }
 }
