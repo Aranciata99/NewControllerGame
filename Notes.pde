@@ -7,6 +7,8 @@
   pBig
   – shake => slow down, expload on stay Spikes
   – UI => Spikes around of Player Circle Buildup 
+  – Reset everything on Reset
+  – Game loop? Start, end, reset?
 
 – Button to go to Menue
 – Screens (Game States)

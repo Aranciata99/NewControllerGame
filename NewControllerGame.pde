@@ -1,7 +1,6 @@
 /* Current To-Dos
  
  Basil
- – Player 2 on Edge
  
  Alex
  
@@ -25,20 +24,21 @@ int shake_1 = 0;
 
 //Player Values
 //Abilities
-int[] abilityCounter = { 3 /*max 10*/, 100 /*max ?*/};
+int[] abilityCounter = { 3, 2 };
+int[] abilityCounterCap = { 10, 8};
 //Shaking
 boolean[] isShaking = { false, false };
 boolean[] shakeCooldown = { false, false };
 boolean[] abilityUse = { false, false };
 int[] shakeState = { 0, 0 };
-int[] shakeCap = { 150, 150 };
+int[] shakeCap = { 150, 100 }; 
 //Speed
 float[] playerSpeedAbs = { 0.25, 0 };
 float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
 //Size
 float[] playerSize = { 40, 80 };
 //Colors
-color[] playerColor = { #c9c9c9, #ed4d0e};
+color[] playerColor = { #828282, #ed4d0e};
 //Inputs
 int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 16 /*SHIFT R*/}, { 83 /*W*/, 87 /*S*/, 32 /*SPACE*/}};
 
@@ -55,7 +55,7 @@ String shake_value_1 = "10";
 
 String poti_value_2 = "0", shake_value_2 = "0";
 //Envoirenment
-color backgroundColor = #002138;
+color backgroundColor = #FFFFFF; //#002138
 
 //Game Sate
 boolean keyboardEnable = false;
@@ -96,8 +96,8 @@ void setup() {
   size(1600, 900);
 
   //State Setup
-  currentState = State.CONTROLLER_SELECT;
-  //currentState = State.PLAY_KEYBOARD;
+  //currentState = State.CONTROLLER_SELECT;
+  currentState = State.PLAY_KEYBOARD;
   //screensetting
   surface.setResizable(true);
   //Start Input Script
@@ -113,6 +113,8 @@ void setupStart() {
   player[1] = new PlayerBig(playerColor[1], playerSize[1]);
   betaAngles = new float[]{ 0.0, 0.0 };
   TextBlock = new TextBlock();
+  abilityCounter[0] = 3;
+  abilityCounter[1] = 3;
 }
 
 //–––
@@ -143,9 +145,9 @@ void draw() {
 
     //Display Player
     for (int p = 0; p < player.length; p++) {
+      ability(p);
       player[p].move(playerSpeed[p], betaAngles[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
-      ability(p);
     }
 
     shake();
@@ -170,6 +172,7 @@ void draw() {
       "",
       "PLAYER BIG",
       "Speed " + betaAngles[1],
+      "ABILITY USE " + abilityCounter[1],
       "SHAKE " + shakeState[1],
     };
     TextBlock.display(text, width / 3 * 2, generallMargin);
@@ -290,7 +293,8 @@ void keyPressed() {
   if (currentState == State.PLAY_KEYBOARD) {
 
     for (int p = 0; p < player.length; p++) {
-      if (keyCode == playerKeyInputs[p][0]) {
+      if (keyCode == playerKeyInputs[p][0] && abilityUse[p] == false) {
+        isShaking[p] = false;
         if (betaAngles[p] < maxBetaAngle) {
           betaAngles[p] += increaseSteps[p];
         } else {
@@ -298,7 +302,8 @@ void keyPressed() {
         }
       }
 
-      if (keyCode == playerKeyInputs[p][1]) {
+      if (keyCode == playerKeyInputs[p][1] && abilityUse[p] == false) {
+        isShaking[p] = false;
         if (betaAngles[p] > minBetaAngle) {
           betaAngles[p] -= increaseSteps[p];
         } else {
@@ -306,8 +311,8 @@ void keyPressed() {
         }
       }
 
-      //small Is shaking
-      if (keyCode == playerKeyInputs[p][2] && abilityCounter[0] > 0) {
+      //Is shaking
+      if (keyCode == playerKeyInputs[p][2] && abilityCounter[p] > 0) {
         isShaking[p] = true;
       }
     }
@@ -353,6 +358,7 @@ void shake() {
 
 float explosionExpansion = playerSize[0];
 float explosionDuration = 255;
+float explosionDurationTimer = explosionDuration;
 
 void ability(int p) {
   //Plyer Small – Speed Up
@@ -373,16 +379,16 @@ void ability(int p) {
   //Plyer Small – Expload
   if (p == 1) {
     if (abilityUse[p]) {
-      if (explosionDuration > 0) {
-        if (explosionExpansion <= height * 1.5) {
+      if (explosionDurationTimer > 0) {
+        if (explosionExpansion <= height/1.5) {
           explosionExpansion += 75;
         }
-        explosionDuration -= 3;
-        player[p].explosion(explosionExpansion, explosionDuration);
+        explosionDurationTimer -= 3;
+        player[p].explosion(explosionExpansion, explosionDurationTimer, explosionDuration);
       } else {
         abilityUse[p] = false;
         explosionExpansion = playerSize[0];
-        explosionDuration = 255;
+        explosionDurationTimer = explosionDuration;
       }
     }
   }
