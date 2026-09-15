@@ -31,7 +31,7 @@ boolean[] isShaking = { false, false };
 boolean[] shakeCooldown = { false, false };
 boolean[] abilityUse = { false, false };
 int[] shakeState = { 0, 0 };
-int[] shakeCap = { 150, 100 }; 
+int[] shakeCap = { 150, 100 };
 //Speed
 float[] playerSpeedAbs = { 0.25, 0 };
 float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
@@ -54,6 +54,10 @@ String poti_value_1 = "110";
 String shake_value_1 = "10";
 
 String poti_value_2 = "0", shake_value_2 = "0";
+
+//Collectibles
+ArrayList<Collectible> collectible = new ArrayList<Collectible>();
+
 //Envoirenment
 color backgroundColor = #FFFFFF; //#002138
 
@@ -113,6 +117,8 @@ void setupStart() {
   player[1] = new PlayerBig(playerColor[1], playerSize[1]);
   betaAngles = new float[]{ 0.0, 0.0 };
   TextBlock = new TextBlock();
+  collectible.add(new SpikeCollectible());
+  //collectible = append(collectible, new SpikeCollectible());
   abilityCounter[0] = 3;
   abilityCounter[1] = 3;
 }
@@ -152,6 +158,12 @@ void draw() {
 
     shake();
 
+    //Collectibles
+    //displayCollectibles
+    for (Collectible c : collectible) {
+      c.display();
+    }
+
     //Settings Text
     text = new String[]{
       "SETTINGS",
@@ -162,18 +174,22 @@ void draw() {
 
     //Debug Text
     text = new String[]{
-      "GAME VALUES",
-      "",
       "PLAYER SMALL",
+      "",
       "ANGLE " + betaAngles[0],
       "SPEED " + playerSpeed[0],
       "ABILITY USE " + abilityCounter[0],
       "SHAKE " + shakeState[0],
+      "X " + player[0].x[0],
+      "Y " + player[0].y[0],
       "",
       "PLAYER BIG",
+      "",
       "Speed " + betaAngles[1],
       "ABILITY USE " + abilityCounter[1],
       "SHAKE " + shakeState[1],
+      "X " + player[1].x[1],
+      "Y " + player[1].y[1],
     };
     TextBlock.display(text, width / 3 * 2, generallMargin);
 
@@ -225,25 +241,25 @@ void startBluetoothBridge() {
             String xiaoSignal = line.substring(5);
             if (!(xiaoSignal.isEmpty())) {
               String[] myArray = xiaoSignal.split(",");
-              
+
               // Sicherheitscheck: Verhindert Abstürze, falls mal ein kaputter String ankommt
-              if (myArray.length >= 3) { 
+              if (myArray.length >= 3) {
                 String controllerIndex = myArray[0];
-                
+
                 switch (controllerIndex) {
-                  case "1":
-                    poti_value_1 = myArray[1];
-                    shake_value_1 = myArray[2];
-                    System.out.println("Controller 1 (klein) -> Poti: " + poti_value_1 + " | Shake: " + shake_value_1);
-                    break;
-                  case "2":
-                    poti_value_2 = myArray[1];
-                    shake_value_2 = myArray[2];
-                    System.out.println("Controller 2 (groß) -> Poti: " + poti_value_2 + " | Shake: " + shake_value_2);
-                    break;
-                  default:
-                    System.out.println("Unbekannte Controller-ID: " + controllerIndex);
-                    break;
+                case "1":
+                  poti_value_1 = myArray[1];
+                  shake_value_1 = myArray[2];
+                  System.out.println("Controller 1 (klein) -> Poti: " + poti_value_1 + " | Shake: " + shake_value_1);
+                  break;
+                case "2":
+                  poti_value_2 = myArray[1];
+                  shake_value_2 = myArray[2];
+                  System.out.println("Controller 2 (groß) -> Poti: " + poti_value_2 + " | Shake: " + shake_value_2);
+                  break;
+                default:
+                  System.out.println("Unbekannte Controller-ID: " + controllerIndex);
+                  break;
                 }
               }
             }
@@ -253,16 +269,17 @@ void startBluetoothBridge() {
             System.out.println("Log: " + line);
           }
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         System.out.println("Fehler in der BLE-Brücke: " + e.getMessage());
         e.printStackTrace();
       }
     }
-  });
-  
+  }
+  );
+
   // Starte den Thread
   bleThread.start();
-
 }
 
 //––

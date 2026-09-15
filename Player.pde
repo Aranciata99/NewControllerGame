@@ -6,6 +6,10 @@ class Player {
   }
   void explosion (float expansion, float durationTime, float duration) {
   }
+
+  //Positions
+  float[] x = {0, 0};
+  float[] y = {0, 0};
 }
 
 class PlayerSmall extends Player {
@@ -82,6 +86,10 @@ class PlayerSmall extends Player {
       circle(0, 35, playerSize / 4);
       popMatrix();
     }
+    
+    x[0] = xPos;
+    y[0] = yPos;
+    
   }
 }
 
@@ -188,6 +196,9 @@ class PlayerBig extends Player {
       circle(0, 55, playerSize / 7.5);
       popMatrix();
     }
+
+    x[1] = xPos;
+    y[1] = yPos;
   }
 
   float spikesAnimation;
