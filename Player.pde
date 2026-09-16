@@ -205,8 +205,9 @@ class PlayerBig extends Player {
 
   void explosion (float expansion, float durationTime, float duration) {
 
-    strokeWeight(1);
+    //strokeWeight(1);
     stroke(playerColor);
+    noStroke();
     fill(color(237, 77, 14, 0));
     circle(xPos, yPos, expansion * 2);
     //Spikes Settings

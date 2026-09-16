@@ -61,6 +61,11 @@ ArrayList<Collectible> collectible = new ArrayList<Collectible>();
 //Envoirenment
 color backgroundColor = #FFFFFF; //#002138
 
+//Spawn Timer
+int[][] collectableSpawnTime = {{0, 0, 0}, {0, 0, 0}}; //Current, Next
+int minSpawnTime = 10000;
+int maxSpawnTime = 20000;
+
 //Game Sate
 boolean keyboardEnable = false;
 boolean controllerEnable = false;
@@ -99,6 +104,12 @@ void setup() {
   //Window Setup
   size(1600, 900);
 
+  //Store current Time
+  for (int i = 0; i < collectableSpawnTime[0].length; i++) {
+    collectableSpawnTime[0][i] = millis();
+    collectableSpawnTime[1][i] = int(random(minSpawnTime, maxSpawnTime));
+  }
+
   //State Setup
   //currentState = State.CONTROLLER_SELECT;
   currentState = State.PLAY_KEYBOARD;
@@ -117,8 +128,6 @@ void setupStart() {
   player[1] = new PlayerBig(playerColor[1], playerSize[1]);
   betaAngles = new float[]{ 0.0, 0.0 };
   TextBlock = new TextBlock();
-  collectible.add(new SpikeCollectible());
-  //collectible = append(collectible, new SpikeCollectible());
   abilityCounter[0] = 3;
   abilityCounter[1] = 3;
 }
@@ -159,6 +168,20 @@ void draw() {
     shake();
 
     //Collectibles
+
+    //Timer
+    for (int c = 0; c < collectableSpawnTime[0].length; c++) {
+      if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
+        spawnCollectible(c);
+        //Next Spawn
+        collectableSpawnTime[0][c] = millis();//also update the stored time
+        collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
+      }
+    };
+
+
+
+    //Collectibles
     //displayCollectibles
     for (Collectible c : collectible) {
       c.display();
@@ -169,6 +192,7 @@ void draw() {
       "SETTINGS",
       "",
       "R > Restart",
+      "M > Menue",
     };
     TextBlock.display(text, generallMargin, generallMargin);
 
@@ -304,6 +328,10 @@ void keyPressed() {
   if (keyCode == 82) {
     setupStart();
   }
+  
+  if (keyCode == 77) {
+    currentState = State.CONTROLLER_SELECT;
+  }
 
   //Gameplay Keyboard Inputs
   //nur, wenn mit Keyboard gespielt wird
@@ -311,7 +339,9 @@ void keyPressed() {
 
     for (int p = 0; p < player.length; p++) {
       if (keyCode == playerKeyInputs[p][0] && abilityUse[p] == false) {
-        isShaking[p] = false;
+        if (p == 1) {
+          isShaking[p] = false;
+        }
         if (betaAngles[p] < maxBetaAngle) {
           betaAngles[p] += increaseSteps[p];
         } else {
@@ -320,7 +350,9 @@ void keyPressed() {
       }
 
       if (keyCode == playerKeyInputs[p][1] && abilityUse[p] == false) {
-        isShaking[p] = false;
+        if (p == 1) {
+          isShaking[p] = false;
+        }
         if (betaAngles[p] > minBetaAngle) {
           betaAngles[p] -= increaseSteps[p];
         } else {
@@ -408,5 +440,27 @@ void ability(int p) {
         explosionDurationTimer = explosionDuration;
       }
     }
+  }
+}
+
+void spawnCollectible(int collType) {
+
+  if (collType == 0) {
+    //spawnSpiek
+    int edgePosNumber = int(random(4));
+    if (edgePosNumber == 0) {
+      collectible.add(new SpikeCollectible(random(width), playerSize[1]/3, playerColor[1]));
+    } else if (edgePosNumber == 1) {
+      collectible.add(new SpikeCollectible(random(width), height - playerSize[1]/3, playerColor[1]));
+    } else if (edgePosNumber == 2) {
+      collectible.add(new SpikeCollectible(playerSize[1]/3, random(height), playerColor[1]));
+    } else {
+      collectible.add(new SpikeCollectible(width - playerSize[1]/3, random(height), playerColor[1]));
+    };
+  } else if (collType == 1) {
+    //spawnSpeed
+    collectible.add(new SpeedCollectible(random(playerSize[1]*2 , width-playerSize[1]*2), random(playerSize[1]*2 , height-playerSize[1]*2), playerColor[0]));
+  } else if (collType == 2) {
+    //spawnShield
   }
 }
