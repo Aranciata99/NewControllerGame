@@ -102,7 +102,7 @@ void setup() {
   setupStart();
 
   //Window Setup
-  size(1600, 900);
+  size(1400, 900);
 
   //Store current Time
   for (int i = 0; i < collectableSpawnTime[0].length; i++) {
@@ -179,8 +179,6 @@ void draw() {
       }
     };
 
-
-
     //Collectibles
     //displayCollectibles
     for (Collectible c : collectible) {
@@ -238,6 +236,22 @@ void draw() {
       player[p].move(playerSpeed[p], potiConvertetAngle);
       player[p].display(backgroundColor, abilityCounter[p]);
     }
+    
+    for (int c = 0; c < collectableSpawnTime[0].length; c++) {
+      if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
+        spawnCollectible(c);
+        //Next Spawn
+        collectableSpawnTime[0][c] = millis();//also update the stored time
+        collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
+      }
+    };
+    
+    //Collectibles
+    //displayCollectibles
+    for (Collectible c : collectible) {
+      c.display();
+    }
+    
     break;
   }
 }
