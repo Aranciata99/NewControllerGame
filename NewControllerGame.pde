@@ -16,11 +16,10 @@ Player[] player = new Player[2];
 float[] betaAngles = { 0.0, 0.0 };
 
 //controller
+int [] shake = {0,0};
 int controllerInput_2;
-int shake_2 = 0;
-
 int controllerInput_1 = 0;
-int shake_1 = 0;
+boolean[] abilityCooldownInactive_controller =  {true,true};
 
 //Player Values
 //Abilities
@@ -71,8 +70,7 @@ boolean keyboardEnable = false;
 boolean controllerEnable = false;
 
 float potiSteps = maxBetaAngle/(940/2);
-float potiConvertetAngle = 0.0;
-
+float [] potiConvertetAngle = {0.0, 0.0};
 //UI
 TextBlock TextBlock;
 String[] text;
@@ -223,19 +221,44 @@ void draw() {
     if (!poti_value_1.isEmpty()) {
       //Convert Input String to Int
       controllerInput_1 = Integer.parseInt(poti_value_1);
-      shake_1 = Integer.parseInt(shake_value_1);
+      shake[0] = Integer.parseInt(shake_value_1);
     }
     if (!poti_value_2.isEmpty()) {
       //Convert Input String to Int
       controllerInput_2 = Integer.parseInt(poti_value_2);
-      shake_2 = Integer.parseInt(shake_value_2);
+      shake[1] = Integer.parseInt(shake_value_2);
     }
+    
     //konvertierung von potentiometer input zu angle output
-    potiConvertetAngle = minBetaAngle + (controllerInput_1*potiSteps);
+    potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
+    potiConvertetAngle[1] = minBetaAngle + (controllerInput_2*potiSteps);
     for (int p = 0; p < player.length; p++) {
-      player[p].move(playerSpeed[p], potiConvertetAngle);
+      //also wenn cooldown aktiv ist
+      if(abilityCooldownInactive_controller[p]==false){
+          if (shake[p]<=30){
+            abilityCooldownInactive_controller[p]=true;
+          }
+      }
+      ability(p);
+      player[p].move(playerSpeed[p], potiConvertetAngle[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
+      
+      //wenn shake grösser als 200 dann ability auslösen
+      if ((shake[p] >=200)&& abilityCooldownInactive_controller[p]){
+         abilityUse[p] = true;
+          
+          //cooldwon wird gestartet
+          abilityCooldownInactive_controller[p] = false;
+
+          if (abilityCounter[p] != 0) {
+            abilityCounter[p]--;
+            }
+      
+        }
+        
     }
+    
+    
     
     for (int c = 0; c < collectableSpawnTime[0].length; c++) {
       if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
@@ -251,6 +274,28 @@ void draw() {
     for (Collectible c : collectible) {
       c.display();
     }
+    
+     //Debug Text
+    text = new String[]{
+      "PLAYER SMALL",
+      "",
+      "ANGLE " + betaAngles[0],
+      "SPEED " + playerSpeed[0],
+      "ABILITY USE " + abilityCounter[0],
+      "SHAKE " + shake[0],
+      "X " + player[0].x[0],
+      "Y " + player[0].y[0],
+      "",
+      "PLAYER BIG",
+      "",
+      "Speed " + betaAngles[1],
+      "ABILITY USE " + abilityCounter[1],
+      "SHAKE " + shake[1],
+      "X " + player[1].x[1],
+      "Y " + player[1].y[1],
+    };
+    TextBlock.display(text, width / 3 * 2, generallMargin);
+
     
     break;
   }
