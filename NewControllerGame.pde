@@ -16,10 +16,10 @@ Player[] player = new Player[2];
 float[] betaAngles = { 0.0, 0.0 };
 
 //controller
-int [] shake = {0,0};
+int [] shake = {0, 0};
 int controllerInput_2;
 int controllerInput_1 = 0;
-boolean[] abilityCooldownInactive_controller =  {true,true};
+boolean[] abilityCooldownInactive_controller =  {true, true};
 
 //Player Values
 //Abilities
@@ -37,7 +37,7 @@ float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
 //Size
 float[] playerSize = { 40, 80 };
 //Colors
-color[] playerColor = { #828282, #ed4d0e};
+color[] playerColor = { 0, #ed4d0e }; //#828282
 //Inputs
 int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 16 /*SHIFT R*/}, { 83 /*W*/, 87 /*S*/, 32 /*SPACE*/}};
 
@@ -59,15 +59,20 @@ ArrayList<Collectible> collectible = new ArrayList<Collectible>();
 
 //Envoirenment
 color backgroundColor = #FFFFFF; //#002138
+Background Background;
 
 //Spawn Timer
 int[][] collectableSpawnTime = {{0, 0, 0}, {0, 0, 0}}; //Current, Next
-int minSpawnTime = 10000;
-int maxSpawnTime = 20000;
+int minSpawnTime = 1000;
+int maxSpawnTime = 200000;
 
 //Game Sate
 boolean keyboardEnable = false;
 boolean controllerEnable = false;
+
+//Game Time
+int gameLength = 20;
+
 
 float potiSteps = maxBetaAngle/(940/2);
 float [] potiConvertetAngle = {0.0, 0.0};
@@ -126,6 +131,8 @@ void setupStart() {
   player[1] = new PlayerBig(playerColor[1], playerSize[1]);
   betaAngles = new float[]{ 0.0, 0.0 };
   TextBlock = new TextBlock();
+  Background = new Background();
+  
   abilityCounter[0] = 3;
   abilityCounter[1] = 3;
 }
@@ -156,6 +163,25 @@ void draw() {
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
 
+    //Background
+    float BackgroundOffsetX;
+    float BackgroundOffsetY;
+    color backColor;
+    
+    if ((gameLength - millis()/1000) < gameLength/2) {
+      BackgroundOffsetX = (player[1].x[1])/4;
+      BackgroundOffsetY = (player[1].y[1])/4;
+      backColor = #ed4d0e;
+    } else {
+      BackgroundOffsetX = (player[0].x[0])/4;
+      BackgroundOffsetY = (player[0].y[0])/4;
+      backColor = #000000;
+    }
+
+    Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength - millis()/1000, backColor);
+
+    println(player[1].y[1]);
+
     //Display Player
     for (int p = 0; p < player.length; p++) {
       ability(p);
@@ -166,7 +192,6 @@ void draw() {
     shake();
 
     //Collectibles
-
     //Timer
     for (int c = 0; c < collectableSpawnTime[0].length; c++) {
       if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
@@ -228,38 +253,36 @@ void draw() {
       controllerInput_2 = Integer.parseInt(poti_value_2);
       shake[1] = Integer.parseInt(shake_value_2);
     }
-    
+
     //konvertierung von potentiometer input zu angle output
     potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
     potiConvertetAngle[1] = minBetaAngle + (controllerInput_2*potiSteps);
     for (int p = 0; p < player.length; p++) {
       //also wenn cooldown aktiv ist
-      if(abilityCooldownInactive_controller[p]==false){
-          if (shake[p]<=30){
-            abilityCooldownInactive_controller[p]=true;
-          }
+      if (abilityCooldownInactive_controller[p]==false) {
+        if (shake[p]<=30) {
+          abilityCooldownInactive_controller[p]=true;
+        }
       }
       ability(p);
       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
-      
-      //wenn shake grösser als 200 dann ability auslösen
-      if ((shake[p] >=200)&& abilityCooldownInactive_controller[p]){
-         abilityUse[p] = true;
-          
-          //cooldwon wird gestartet
-          abilityCooldownInactive_controller[p] = false;
 
-          if (abilityCounter[p] != 0) {
-            abilityCounter[p]--;
-            }
-      
+      //wenn shake grösser als 200 dann ability auslösen
+      if ((shake[p] >=200)&& abilityCooldownInactive_controller[p]) {
+        abilityUse[p] = true;
+
+        //cooldwon wird gestartet
+        abilityCooldownInactive_controller[p] = false;
+
+        if (abilityCounter[p] != 0) {
+          abilityCounter[p]--;
         }
-        
+      }
     }
-    
-    
-    
+
+
+
     for (int c = 0; c < collectableSpawnTime[0].length; c++) {
       if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
         spawnCollectible(c);
@@ -268,14 +291,14 @@ void draw() {
         collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
       }
     };
-    
+
     //Collectibles
     //displayCollectibles
     for (Collectible c : collectible) {
       c.display();
     }
-    
-     //Debug Text
+
+    //Debug Text
     text = new String[]{
       "PLAYER SMALL",
       "",
@@ -296,7 +319,7 @@ void draw() {
     };
     TextBlock.display(text, width / 3 * 2, generallMargin);
 
-    
+
     break;
   }
 }
@@ -387,7 +410,7 @@ void keyPressed() {
   if (keyCode == 82) {
     setupStart();
   }
-  
+
   if (keyCode == 77) {
     currentState = State.CONTROLLER_SELECT;
   }
@@ -508,17 +531,17 @@ void spawnCollectible(int collType) {
     //spawnSpiek
     int edgePosNumber = int(random(4));
     if (edgePosNumber == 0) {
-      collectible.add(new SpikeCollectible(random(width), playerSize[1]/3, playerColor[1]));
+      collectible.add(new SpikeCollectible(random(width), playerSize[1]/3, playerColor[0]));
     } else if (edgePosNumber == 1) {
-      collectible.add(new SpikeCollectible(random(width), height - playerSize[1]/3, playerColor[1]));
+      collectible.add(new SpikeCollectible(random(width), height - playerSize[1]/3, playerColor[0]));
     } else if (edgePosNumber == 2) {
-      collectible.add(new SpikeCollectible(playerSize[1]/3, random(height), playerColor[1]));
+      collectible.add(new SpikeCollectible(playerSize[1]/3, random(height), playerColor[0]));
     } else {
-      collectible.add(new SpikeCollectible(width - playerSize[1]/3, random(height), playerColor[1]));
+      collectible.add(new SpikeCollectible(width - playerSize[1]/3, random(height), playerColor[0]));
     };
   } else if (collType == 1) {
     //spawnSpeed
-    collectible.add(new SpeedCollectible(random(playerSize[1]*2 , width-playerSize[1]*2), random(playerSize[1]*2 , height-playerSize[1]*2), playerColor[0]));
+    collectible.add(new SpeedCollectible(random(playerSize[1]*2, width-playerSize[1]*2), random(playerSize[1]*2, height-playerSize[1]*2), playerColor[0]));
   } else if (collType == 2) {
     //spawnShield
   }

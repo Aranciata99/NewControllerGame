@@ -211,16 +211,19 @@ class PlayerBig extends Player {
     fill(color(237, 77, 14, 0));
     circle(xPos, yPos, expansion * 2);
     //Spikes Settings
-    strokeCap(ROUND);
+    strokeCap(SQUARE);
     stroke(playerColor);
     //Spikes Display
     for (int i = 1; i < spikeCount + 1; i++) {
       pushMatrix();
-      strokeWeight(6);
+      strokeWeight(0);
       translate(xPos, yPos);
       rotate(radians(randomSpikePos[i-1]));
       spikesAnimation = expansion / 2 + randomSpikeLength[i- 1];
-      line(0, 0, spikesAnimation, 0);
+      fill(color(237, 77, 14, durationTime*2));
+      circle(spikesAnimation/2, spikesAnimation/2, 15);
+      circle(spikesAnimation/3, spikesAnimation/3, 12);
+      circle(spikesAnimation/4, spikesAnimation/4, 8);
       popMatrix();
     }
     println(durationTime);
