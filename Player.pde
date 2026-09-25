@@ -226,6 +226,6 @@ class PlayerBig extends Player {
       circle(spikesAnimation/4, spikesAnimation/4, 8);
       popMatrix();
     }
-    println(durationTime);
+    //println(durationTime);
   }
 }

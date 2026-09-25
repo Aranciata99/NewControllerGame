@@ -68,14 +68,16 @@ Background Background;
 //Spawn Timer
 int[][] collectableSpawnTime = {{0, 0, 0}, {0, 0, 0}}; //Current, Next
 int minSpawnTime = 1000;
-int maxSpawnTime = 200000;
+int maxSpawnTime = 5000;
 
 //Game Sate
 boolean keyboardEnable = false;
 boolean controllerEnable = false;
 
 //Game Time
-int gameLength = 20;
+int gameLength = 30;
+int startTime = millis();
+int gameTimer;
 
 
 float potiSteps = maxBetaAngle/(940/2);
@@ -136,9 +138,12 @@ void setupStart() {
   betaAngles = new float[]{ 0.0, 0.0 };
   TextBlock = new TextBlock();
   Background = new Background();
-  
   abilityCounter[0] = 3;
   abilityCounter[1] = 3;
+  startTime = millis();
+  for (int i = collectible.size() - 1; i >= 0; i--) {
+    collectible.remove(i);
+  }
 }
 
 //–––
@@ -169,7 +174,9 @@ void draw() {
   
     //Background
     update_background();
-    //println(player[1].y[1]);
+    
+    //Timer
+    gameTimer = millis() - startTime;
 
     //Display Player
     for (int p = 0; p < player.length; p++) {
@@ -182,20 +189,35 @@ void draw() {
 
     //Collectibles
     //Timer
-    for (int c = 0; c < collectableSpawnTime[0].length; c++) {
+    /*for (int c = 0; c < collectableSpawnTime[0].length; c++) {
       if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
         spawnCollectible(c);
         //Next Spawn
         collectableSpawnTime[0][c] = millis();//also update the stored time
         collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
       }
-    };
+    };*/
+    
+    if (millis() - collectableSpawnTime[0][1] >= collectableSpawnTime[1][1]) {
+        spawnCollectible(1);
+        //Next Spawn
+        collectableSpawnTime[0][1] = millis();//also update the stored time
+        collectableSpawnTime[1][1] = int(random(minSpawnTime, maxSpawnTime));
+      }
 
     //Collectibles
     //displayCollectibles
     for (Collectible c : collectible) {
       c.display();
     }
+    
+    //Game Time Management
+    if (gameTimer >= gameLength * 1000) {
+      println("GAME OVER");
+      setupStart();
+
+    }
+    
 
     //Settings Text
     text = new String[]{
@@ -562,7 +584,7 @@ void update_background(){
     float BackgroundOffsetY;
     color backColor;
     
-    if ((gameLength - millis()/1000) < gameLength/2) {
+    if ((gameLength + gameTimer)/1000 > gameLength/2) {
       BackgroundOffsetX = (player[1].x[1])/4;
       BackgroundOffsetY = (player[1].y[1])/4;
       backColor = #ed4d0e;
@@ -572,6 +594,5 @@ void update_background(){
       backColor = #000000;
     }
 
-    Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength - millis()/1000, backColor);
-
+    Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength, gameTimer);
 }
