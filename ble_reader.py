@@ -32,8 +32,8 @@ async def connect_and_listen(device):
         print(f"STATUS: Verbindung zu {device.name} getrennt/fehlgeschlagen: {e}", flush=True)
 
 async def main():
-    print("STATUS: Scanne nach XIAO Geräten (15 Sekunden Suchzeit)...", flush=True)
-    devices = await BleakScanner.discover(timeout=15.0)
+    print("STATUS: Scanne nach XIAO Geräten (5 Sekunden Suchzeit)...", flush=True)
+    devices = await BleakScanner.discover(timeout=5.0)
     
     print("STATUS: --- ALLE GEFUNDENEN GERÄTE ---", flush=True)
     target_devices_found = []

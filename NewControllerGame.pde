@@ -15,11 +15,15 @@ Player[] player = new Player[2];
 //Angles
 float[] betaAngles = { 0.0, 0.0 };
 
-//controller
+//-----controller-----
 int [] shake = {0, 0};
 int controllerInput_2;
 int controllerInput_1 = 0;
 boolean[] abilityCooldownInactive_controller =  {true, true};
+int [] shake_threashold = {200,200};
+
+
+
 
 //Player Values
 //Abilities
@@ -180,7 +184,7 @@ void draw() {
 
     Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength - millis()/1000, backColor);
 
-    println(player[1].y[1]);
+    //println(player[1].y[1]);
 
     //Display Player
     for (int p = 0; p < player.length; p++) {
@@ -257,19 +261,41 @@ void draw() {
     //konvertierung von potentiometer input zu angle output
     potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
     potiConvertetAngle[1] = minBetaAngle + (controllerInput_2*potiSteps);
+    
+    
     for (int p = 0; p < player.length; p++) {
       //also wenn cooldown aktiv ist
+      //shake wert muss zuerst unter 30 gelangen, dass nochaml eine ability ausgelöst werden kann
       if (abilityCooldownInactive_controller[p]==false) {
         if (shake[p]<=30) {
           abilityCooldownInactive_controller[p]=true;
         }
       }
       ability(p);
+      
+             //slow Down Big when shaked controller version
+      if (p == 1 && shake[p]>=50) {
+        
+         if(shake[p]>=shake_threashold[p]){
+            shake[p] = shake_threashold[p];
+         }
+        if (potiConvertetAngle[p] > 0.1) {
+          potiConvertetAngle[p] -= 2.*shake[p]/shake_threashold[p];
+        } else if (potiConvertetAngle[p] < -0.1) {
+          potiConvertetAngle[p] += 2.*shake[p]/shake_threashold[p];
+        } else {
+          potiConvertetAngle[p] = 0.0;
+        }
+        
+      }
+      
       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
 
-      //wenn shake grösser als 200 dann ability auslösen
-      if ((shake[p] >=200)&& abilityCooldownInactive_controller[p]) {
+     
+      
+      //wenn shake grösser als shake_threashold dann ability auslösen
+      if ((shake[p] >=shake_threashold[p])&& abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
         abilityUse[p] = true;
 
         //cooldwon wird gestartet
@@ -311,7 +337,7 @@ void draw() {
       "",
       "PLAYER BIG",
       "",
-      "Speed " + betaAngles[1],
+      "Speed " + potiConvertetAngle[1],
       "ABILITY USE " + abilityCounter[1],
       "SHAKE " + shake[1],
       "X " + player[1].x[1],
@@ -507,7 +533,7 @@ void ability(int p) {
     }
   }
 
-  //Plyer Small – Expload
+  //Plyer Big – Expload
   if (p == 1) {
     if (abilityUse[p]) {
       if (explosionDurationTimer > 0) {
