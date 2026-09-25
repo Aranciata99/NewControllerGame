@@ -166,24 +166,9 @@ void draw() {
 
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
-
+  
     //Background
-    float BackgroundOffsetX;
-    float BackgroundOffsetY;
-    color backColor;
-    
-    if ((gameLength - millis()/1000) < gameLength/2) {
-      BackgroundOffsetX = (player[1].x[1])/4;
-      BackgroundOffsetY = (player[1].y[1])/4;
-      backColor = #ed4d0e;
-    } else {
-      BackgroundOffsetX = (player[0].x[0])/4;
-      BackgroundOffsetY = (player[0].y[0])/4;
-      backColor = #000000;
-    }
-
-    Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength - millis()/1000, backColor);
-
+    update_background();
     //println(player[1].y[1]);
 
     //Display Player
@@ -247,6 +232,9 @@ void draw() {
 
     //wen mit BLE Controller gespielt wird
   case PLAY_CONTROLLER:
+    
+    update_background();
+  
     if (!poti_value_1.isEmpty()) {
       //Convert Input String to Int
       controllerInput_1 = Integer.parseInt(poti_value_1);
@@ -286,13 +274,10 @@ void draw() {
         } else {
           potiConvertetAngle[p] = 0.0;
         }
-        
       }
       
       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
-
-     
       
       //wenn shake grösser als shake_threashold dann ability auslösen
       if ((shake[p] >=shake_threashold[p])&& abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
@@ -306,8 +291,6 @@ void draw() {
         }
       }
     }
-
-
 
     for (int c = 0; c < collectableSpawnTime[0].length; c++) {
       if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
@@ -571,4 +554,24 @@ void spawnCollectible(int collType) {
   } else if (collType == 2) {
     //spawnShield
   }
+}
+
+void update_background(){
+ //Background
+    float BackgroundOffsetX;
+    float BackgroundOffsetY;
+    color backColor;
+    
+    if ((gameLength - millis()/1000) < gameLength/2) {
+      BackgroundOffsetX = (player[1].x[1])/4;
+      BackgroundOffsetY = (player[1].y[1])/4;
+      backColor = #ed4d0e;
+    } else {
+      BackgroundOffsetX = (player[0].x[0])/4;
+      BackgroundOffsetY = (player[0].y[0])/4;
+      backColor = #000000;
+    }
+
+    Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength - millis()/1000, backColor);
+
 }
