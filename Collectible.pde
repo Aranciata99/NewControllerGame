@@ -1,6 +1,8 @@
 class Collectible {
   
   int strokeWeight = 2;
+  float xColPos;
+  float yColPos;
 
   void display() {
   };
@@ -37,6 +39,10 @@ class SpeedCollectible extends Collectible {
     }
     fill(col, opacity);
     circle(xPos, yPos, size);
+    
+    xColPos = xPos;
+    yColPos = yPos;
+    
   }
   
   
@@ -72,5 +78,8 @@ class SpikeCollectible extends Collectible {
     }
     fill(col, opacity);
     circle(xPos, yPos, size);
+    
+    xColPos = xPos;
+    yColPos = yPos;
   }
 }

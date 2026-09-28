@@ -20,7 +20,7 @@ int [] shake = {0, 0};
 int controllerInput_2;
 int controllerInput_1 = 0;
 boolean[] abilityCooldownInactive_controller =  {true, true};
-int [] shake_threashold = {200,200};
+int [] shake_threashold = {200, 200};
 
 
 
@@ -60,6 +60,7 @@ String poti_value_2 = "0", shake_value_2 = "0";
 
 //Collectibles
 ArrayList<Collectible> collectible = new ArrayList<Collectible>();
+int timeSafe = 3;
 
 //Envoirenment
 color backgroundColor = #FFFFFF; //#002138
@@ -171,10 +172,10 @@ void draw() {
 
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
-  
+
     //Background
     update_background();
-    
+
     //Timer
     gameTimer = millis() - startTime;
 
@@ -190,34 +191,44 @@ void draw() {
     //Collectibles
     //Timer
     /*for (int c = 0; c < collectableSpawnTime[0].length; c++) {
-      if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
-        spawnCollectible(c);
-        //Next Spawn
-        collectableSpawnTime[0][c] = millis();//also update the stored time
-        collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
-      }
-    };*/
-    
+     if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
+     spawnCollectible(c);
+     //Next Spawn
+     collectableSpawnTime[0][c] = millis();//also update the stored time
+     collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
+     }
+     };*/
+
     if (millis() - collectableSpawnTime[0][1] >= collectableSpawnTime[1][1]) {
-        spawnCollectible(1);
-        //Next Spawn
-        collectableSpawnTime[0][1] = millis();//also update the stored time
-        collectableSpawnTime[1][1] = int(random(minSpawnTime, maxSpawnTime));
-      }
+      spawnCollectible(1);
+      //Next Spawn
+      collectableSpawnTime[0][1] = millis();//also update the stored time
+      collectableSpawnTime[1][1] = int(random(minSpawnTime, maxSpawnTime));
+    }
 
     //Collectibles
     //displayCollectibles
-    for (Collectible c : collectible) {
+    for (int i = collectible.size() - 1; i >= 0; i--) {
+      Collectible c = collectible.get(i);
       c.display();
+
+      //Collider
+      if (dist(c.xColPos, c.yColPos, player[0].x[0], player[0].y[0]) < playerSize[0]) {
+        collectible.remove(i);
+        if (abilityCounter[0] < abilityCounterCap[0]){
+          abilityCounter[0]++;
+        }
+        startTime += timeSafe * 1000;
+      }
     }
-    
+   
+
     //Game Time Management
     if (gameTimer >= gameLength * 1000) {
       println("GAME OVER");
       setupStart();
-
     }
-    
+
 
     //Settings Text
     text = new String[]{
@@ -254,9 +265,9 @@ void draw() {
 
     //wen mit BLE Controller gespielt wird
   case PLAY_CONTROLLER:
-    
+
     update_background();
-  
+
     if (!poti_value_1.isEmpty()) {
       //Convert Input String to Int
       controllerInput_1 = Integer.parseInt(poti_value_1);
@@ -271,8 +282,8 @@ void draw() {
     //konvertierung von potentiometer input zu angle output
     potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
     potiConvertetAngle[1] = minBetaAngle + (controllerInput_2*potiSteps);
-    
-    
+
+
     for (int p = 0; p < player.length; p++) {
       //also wenn cooldown aktiv ist
       //shake wert muss zuerst unter 30 gelangen, dass nochaml eine ability ausgelöst werden kann
@@ -282,13 +293,13 @@ void draw() {
         }
       }
       ability(p);
-      
-             //slow Down Big when shaked controller version
+
+      //slow Down Big when shaked controller version
       if (p == 1 && shake[p]>=50) {
-        
-         if(shake[p]>=shake_threashold[p]){
-            shake[p] = shake_threashold[p];
-         }
+
+        if (shake[p]>=shake_threashold[p]) {
+          shake[p] = shake_threashold[p];
+        }
         if (potiConvertetAngle[p] > 0.1) {
           potiConvertetAngle[p] -= 2.*shake[p]/shake_threashold[p];
         } else if (potiConvertetAngle[p] < -0.1) {
@@ -297,10 +308,10 @@ void draw() {
           potiConvertetAngle[p] = 0.0;
         }
       }
-      
+
       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
-      
+
       //wenn shake grösser als shake_threashold dann ability auslösen
       if ((shake[p] >=shake_threashold[p])&& abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
         abilityUse[p] = true;
@@ -578,21 +589,28 @@ void spawnCollectible(int collType) {
   }
 }
 
-void update_background(){
- //Background
-    float BackgroundOffsetX;
-    float BackgroundOffsetY;
-    color backColor;
-    
-    if ((gameLength + gameTimer)/1000 > gameLength/2) {
-      BackgroundOffsetX = (player[1].x[1])/4;
-      BackgroundOffsetY = (player[1].y[1])/4;
-      backColor = #ed4d0e;
-    } else {
-      BackgroundOffsetX = (player[0].x[0])/4;
-      BackgroundOffsetY = (player[0].y[0])/4;
-      backColor = #000000;
-    }
+void spawnCollectableText() {
+  textAlign(LEFT);
+  textSize(20);
+  fill(0, 255);
+  text(timeSafe, 100, 100);
+}
 
-    Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength, gameTimer);
+void update_background() {
+  //Background
+  float BackgroundOffsetX;
+  float BackgroundOffsetY;
+  color backColor;
+
+  if ((gameLength + gameTimer)/1000 > gameLength/2) {
+    BackgroundOffsetX = (player[1].x[1])/4;
+    BackgroundOffsetY = (player[1].y[1])/4;
+    backColor = #ed4d0e;
+  } else {
+    BackgroundOffsetX = (player[0].x[0])/4;
+    BackgroundOffsetY = (player[0].y[0])/4;
+    backColor = #000000;
+  }
+
+  Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength, gameTimer);
 }
