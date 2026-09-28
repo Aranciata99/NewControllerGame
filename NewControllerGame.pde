@@ -8,6 +8,9 @@
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+//Schrift
+PFont titleFont;
+PFont mainFont;
 
 //Classes
 Player[] player = new Player[2];
@@ -27,23 +30,23 @@ int [] shake_threashold = {200, 200};
 
 //Player Values
 //Abilities
-int[] abilityCounter = { 3, 2 };
+int[] abilityCounter = { 0, 2 };
 int[] abilityCounterCap = { 10, 8};
 //Shaking
 boolean[] isShaking = { false, false };
 boolean[] shakeCooldown = { false, false };
 boolean[] abilityUse = { false, false };
-int[] shakeState = { 0, 0 };
 int[] shakeCap = { 150, 100 };
+int[] shakeState = { shakeCap[0]-1, shakeCap[1]-1 };
 //Speed
 float[] playerSpeedAbs = { 0.25, 0 };
-float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
+float[] playerSpeed = { 10, playerSpeedAbs[1] };
 //Size
 float[] playerSize = { 40, 80 };
 //Colors
 color[] playerColor = { 0, #ed4d0e }; //#828282
 //Inputs
-int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 16 /*SHIFT R*/}, { 83 /*W*/, 87 /*S*/, 32 /*SPACE*/}};
+int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 47 /*— R*/}, { 83 /*W*/, 87 /*S*/, 32 /*SPACE*/}};
 
 //Placeholder Key Input Controll
 float[] increaseSteps = { 0.5, 0.5 };
@@ -74,6 +77,7 @@ int maxSpawnTime = 5000;
 //Game Sate
 boolean keyboardEnable = false;
 boolean controllerEnable = false;
+boolean gameIsLoading = false;
 
 //Game Time
 int gameLength = 30;
@@ -89,9 +93,11 @@ String[] text;
 
 //Sate machine
 public enum State {
-  CONTROLLER_SELECT,
+  MAIN_MENUE,
+    LOADGAME,
     PLAY_KEYBOARD,
-    PLAY_CONTROLLER
+    PLAY_CONTROLLER,
+    ENDSCREEN,
 }
 
 //UI
@@ -100,6 +106,13 @@ public enum State {
 float generallMargin = 30;
 String[] textBlock;
 
+//Main Menue
+float menueTimer = 0;
+float increaseMenueBG = 0.1;
+float increaseMenueBGSpeed = 0.01;
+
+boolean fadeIn = false;
+
 State currentState;
 
 //–––
@@ -107,7 +120,13 @@ State currentState;
 //–––
 
 void setup() {
+  //Main Setup
   rectMode(CENTER);
+  //Typeface
+  titleFont = createFont("assets/DOSSCollection-Acid-Trial.ttf", 20);
+  mainFont = createFont("assets/TWKBurns-Bold.ttf", 20);
+  textFont (mainFont);
+
   //Instantiate Classes
   setupStart();
 
@@ -121,8 +140,7 @@ void setup() {
   }
 
   //State Setup
-  //currentState = State.CONTROLLER_SELECT;
-  currentState = State.PLAY_KEYBOARD;
+  currentState = State.MAIN_MENUE;
   //screensetting
   surface.setResizable(true);
   //Start Input Script
@@ -158,12 +176,50 @@ void draw() {
   switch(currentState) {
     //startfenster
     //menue frage controller o oder p
-  case CONTROLLER_SELECT:
+  case MAIN_MENUE:
+
+    //Shake Value
+    shakeState[1] += isShaking[1] ? 1 : -1;
+    shakeState[1] = constrain(shakeState[1], 0, shakeCap[1]);
+
+    textAlign(CENTER);
+    fill(playerColor[1], 255 - shakeState[1]*3);
+    textFont (titleFont);
+    textSize(300-shakeState[1]);
+    text("PUFFER", width/2, height/2);
+    text("HUNT", width/2, height/2 + 230 - (shakeState[1]*0.75));
+    textFont (mainFont);
+
+
+    Background.display(width/2, height/2, gameLength, menueTimer*100);
+    menueTimer += increaseMenueBG;
+    increaseMenueBG += increaseMenueBGSpeed;
+    if (menueTimer > gameLength*10 || menueTimer < 0) {
+      increaseMenueBG *= -1;
+    }
+    if (increaseMenueBG > 1 || increaseMenueBG < 0) {
+      increaseMenueBGSpeed *= -1;
+    }
+
+    if (shakeState[1] >= shakeCap[1]) {
+      shakeState[1] = shakeCap[1]+1;
+      fadeIn = true;
+    }
+
+    if ( fadeIn() ) {
+      setupStart();
+      shakeState[0] = 0;
+      shakeState[1] = 0;
+      gameIsLoading = true;
+      currentState = State.PLAY_KEYBOARD;
+    };
+
+
 
     text = new String[]{
       "START GAME",
       "",
-      "O > Keyboard",
+      "SHAKE 1 Space " + shakeState[1] + " > Keyboard",
       "P > BLE_Controller",
     };
     TextBlock.display(text, generallMargin, generallMargin);
@@ -173,11 +229,26 @@ void draw() {
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
 
+    //LOAD GAME
+    //LOAD GAME
+    //LOAD GAME
+
+    if (gameIsLoading) {
+      if (abilityCounter[0] < 3) {
+        abilityCounter[0]++;
+      }
+
+      if (playerSpeed[0] > playerSpeedAbs[0]) {
+        playerSpeed[0] -= 0.05;
+      } else {
+        playerSpeed[0] = playerSpeedAbs[0];
+      }
+    }
+
     //Background
     update_background();
-
-    //Timer
-    gameTimer = millis() - startTime;
+    
+    println(gameTimer);
 
     //Display Player
     for (int p = 0; p < player.length; p++) {
@@ -185,48 +256,45 @@ void draw() {
       player[p].move(playerSpeed[p], betaAngles[p]);
       player[p].display(backgroundColor, abilityCounter[p]);
     }
-
-    shake();
-
-    //Collectibles
+    
     //Timer
-    /*for (int c = 0; c < collectableSpawnTime[0].length; c++) {
-     if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
-     spawnCollectible(c);
-     //Next Spawn
-     collectableSpawnTime[0][c] = millis();//also update the stored time
-     collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
-     }
-     };*/
+    gameTimer = millis() - startTime;
 
-    if (millis() - collectableSpawnTime[0][1] >= collectableSpawnTime[1][1]) {
-      spawnCollectible(1);
-      //Next Spawn
-      collectableSpawnTime[0][1] = millis();//also update the stored time
-      collectableSpawnTime[1][1] = int(random(minSpawnTime, maxSpawnTime));
-    }
 
-    //Collectibles
-    //displayCollectibles
-    for (int i = collectible.size() - 1; i >= 0; i--) {
-      Collectible c = collectible.get(i);
-      c.display();
+    if (!gameIsLoading) {
 
-      //Collider
-      if (dist(c.xColPos, c.yColPos, player[0].x[0], player[0].y[0]) < playerSize[0]) {
-        collectible.remove(i);
-        if (abilityCounter[0] < abilityCounterCap[0]){
-          abilityCounter[0]++;
-        }
-        startTime += timeSafe * 1000;
+      shake();
+
+      //Collectibles
+      if (millis() - collectableSpawnTime[0][1] >= collectableSpawnTime[1][1]) {
+        spawnCollectible(1);
+        //Next Spawn
+        collectableSpawnTime[0][1] = millis();//also update the stored time
+        collectableSpawnTime[1][1] = int(random(minSpawnTime, maxSpawnTime));
       }
-    }
-   
 
-    //Game Time Management
-    if (gameTimer >= gameLength * 1000) {
-      println("GAME OVER");
-      setupStart();
+      //Collectibles
+      //displayCollectibles
+      for (int i = collectible.size() - 1; i >= 0; i--) {
+        Collectible c = collectible.get(i);
+        c.display();
+
+        //Collider
+        if (dist(c.xColPos, c.yColPos, player[0].x[0], player[0].y[0]) < playerSize[0]) {
+          collectible.remove(i);
+          if (abilityCounter[0] < abilityCounterCap[0]) {
+            abilityCounter[0]++;
+          }
+          startTime += timeSafe * 1000;
+        }
+      }
+
+
+      //Game Time Management
+      if (gameTimer >= gameLength * 1000) {
+        println("GAME OVER");
+        setupStart();
+      }
     }
 
 
@@ -436,15 +504,19 @@ void startBluetoothBridge() {
 
 //UI StartScreen
 void keyPressed() {
-  //p = 80
-  //o = 79
   //Choose BLECONTROLLER or KEYBOARD for game
-  if (currentState == State.CONTROLLER_SELECT) {
+  //p = 80
+  if (currentState == State.MAIN_MENUE) {
     if (keyCode == 80) {
+      setupStart();
       currentState = State.PLAY_CONTROLLER;
     }
-    if (keyCode == 79) {
-      currentState = State.PLAY_KEYBOARD;
+
+    for (int p = 0; p < player.length; p++) {
+      //Is shaking
+      if (keyCode == playerKeyInputs[p][2]) {
+        isShaking[p] = true;
+      }
     }
   }
 
@@ -454,12 +526,14 @@ void keyPressed() {
   }
 
   if (keyCode == 77) {
-    currentState = State.CONTROLLER_SELECT;
+    shakeState[0] = shakeCap[0]-1;
+    shakeState[1] = shakeCap[1]-1;
+    currentState = State.MAIN_MENUE;
   }
 
   //Gameplay Keyboard Inputs
   //nur, wenn mit Keyboard gespielt wird
-  if (currentState == State.PLAY_KEYBOARD) {
+  if (currentState == State.PLAY_KEYBOARD || currentState == State.LOADGAME) {
 
     for (int p = 0; p < player.length; p++) {
       if (keyCode == playerKeyInputs[p][0] && abilityUse[p] == false) {
@@ -613,4 +687,29 @@ void update_background() {
   }
 
   Background.display(width/2 - width/8 + BackgroundOffsetX, height/2  - height/8 + BackgroundOffsetY, gameLength, gameTimer);
+}
+
+float fadeSize = 0;
+float fadeMultiplicator = 0.001;
+
+boolean fadeIn() {
+
+  if (fadeIn) {
+    if (fadeSize < 100) {
+      fadeSize += fadeMultiplicator;
+      fadeMultiplicator *= 1.1;
+    } else {
+      fadeSize = 0;
+      fadeMultiplicator = 0.001;
+      setupStart();
+      fadeIn = false;
+      return true;
+    }
+  }
+
+  fill(255);
+  noStroke();
+  rect(width/2, height/2, width/100*fadeSize, height/100*fadeSize);
+
+  return false;
 }

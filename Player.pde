@@ -29,8 +29,8 @@ class PlayerSmall extends Player {
     //Colors
     playerColor = c;
     //Position
-    xPos = random(playerSize * 2, width - playerSize * 2);
-    yPos = random(playerSize * 2, height - playerSize * 2);
+    xPos = width/2;
+    yPos = height/2;
     //Immer in die mitte?
     playerSize = size;
     betaAngle = xPos / (width / 360);
