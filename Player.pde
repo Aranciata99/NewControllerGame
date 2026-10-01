@@ -8,8 +8,11 @@ class Player {
   }
 
   //Positions
-  float[] x = {0, 0};
-  float[] y = {0, 0};
+  float x = 0;
+  float y = 0;
+  int spikeCount = 50;
+  float[] spikePos = new float[spikeCount*3];
+  
 }
 
 class PlayerSmall extends Player {
@@ -87,8 +90,8 @@ class PlayerSmall extends Player {
       popMatrix();
     }
     
-    x[0] = xPos;
-    y[0] = yPos;
+    x = xPos;
+    y = yPos;
     
   }
 }
@@ -106,7 +109,6 @@ class PlayerBig extends Player {
   //int xDirection = 0;
   float localSpeed;
   //Spikes
-  int spikeCount = 50;
   float[] randomSpikePos = new float[spikeCount];
   float[] randomSpikeLength = new float[spikeCount];
 
@@ -192,13 +194,19 @@ class PlayerBig extends Player {
       pushMatrix();
       translate(xPos, yPos);
       fill(playerColor);
+      stroke(playerColor);
+      if (abilityCount < 8){
+        strokeWeight(0);
+      } else {
+        strokeWeight(5);
+      }
       rotate(radians(rotation + 90 + (20*i)));
-      circle(0, 55, playerSize / 7.5);
+      circle(0, 50, playerSize / 15);
       popMatrix();
     }
 
-    x[1] = xPos;
-    y[1] = yPos;
+    x = xPos;
+    y = yPos;
   }
 
   float spikesAnimation;
@@ -208,8 +216,8 @@ class PlayerBig extends Player {
     //strokeWeight(1);
     stroke(playerColor);
     noStroke();
-    fill(color(237, 77, 14, 0));
-    circle(xPos, yPos, expansion * 2);
+    //fill(color(237, 77, 14, 0));
+    //circle(xPos, yPos, expansion*1.4);
     //Spikes Settings
     strokeCap(SQUARE);
     stroke(playerColor);

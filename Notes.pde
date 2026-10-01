@@ -1,5 +1,14 @@
 /* Notes
 
+  – Game Timer & Highscore -> Endscreen
+  – Soft Start on Game Start
+  – States of Screens
+    – if no input => MainMenue
+    – if Input => Endscreen
+    ((– evt, if Start screen endTime start Game idle Screen?))
+  – Game Timer & Highscore
+  – Fades to Start Game & To Endscreen
+
  – speedbar loads on time or Collectibles? –> Testing 
  – Track when speed up
  – Show where Spikes go & when fall of
