@@ -32,6 +32,7 @@ int [] shake_threashold = {200, 200};
 //Abilities
 int[] abilityCounter = { 0, 0 };
 int[] abilityCounterCap = { 10, 8};
+int[] abilityNeeded = {3, abilityCounterCap[1]};
 int abilityP2Timer = 0;
 int abilityCooldownP2 = 300;
 //Shaking
@@ -84,16 +85,24 @@ boolean controllerEnable = false;
 boolean gameIsLoading = false;
 
 //Game Time
-int gameLength = 60; 
+int gameLength = 60;
 int startTime = millis();
+int fixedStartTime = millis();
 int gameTimer;
 
 //EndScreen Timer
-int screenLength = 10; //60
+int screenLength = 10;
 int startScreenTime = millis();
 int ScreenTimer;
 int ScreenTimerSeconds = 0;
 
+//Score
+float gameTimeScore;
+
+String highScoreFile = "highScore.txt";
+String lowScoreFile = "lowScore.txt";
+float gameTimeHighScore;
+float gameTimeLowScore;
 
 float potiSteps = maxBetaAngle/(940/2);
 float [] potiConvertetAngle = {0.0, 0.0};
@@ -148,6 +157,21 @@ void setup() {
     collectableSpawnTime[1][i] = int(random(minSpawnTime, maxSpawnTime));
   }
 
+  //Score
+  String[] fileHighScore = loadStrings(highScoreFile);
+  if (fileHighScore.length > 0) {
+    gameTimeHighScore = int(fileHighScore[0]);
+  } else {
+    gameTimeHighScore = 0;
+  }
+  String[] fileLowScore = loadStrings(lowScoreFile);
+  if (fileLowScore.length > 0) {
+    gameTimeLowScore = int(fileLowScore[0]);
+  } else {
+    gameTimeLowScore = 100000000;
+  }
+
+
   //State Setup
   currentState = State.MAIN_MENUE;
   //currentState = State.PLAY_KEYBOARD;
@@ -168,11 +192,12 @@ void setupStart() {
   betaAngles = new float[]{ 0.0, 0.0 };
   TextBlock = new TextBlock();
   Background = new Background();
-  abilityCounter[0] = 3;
+  abilityCounter[0] = 0;
   abilityCounter[1] = 0;
   shakeState[0] = 0;
   shakeState[1] = 0;
   startTime = millis();
+  fixedStartTime = millis();
   startScreenTime = millis();
   ScreenTimerSeconds = 0;
   for (int i = collectible.size() - 1; i >= 0; i--) {
@@ -192,9 +217,9 @@ void draw() {
     //startfenster
     //menue frage controller o oder p
   case MAIN_MENUE:
-    
+
     backgroundColor = 255;
-    
+
     //Shake Value
     shakeState[1] += isShaking[1] ? 1 : -1;
     shakeState[1] = constrain(shakeState[1], 0, shakeCap[1]);
@@ -258,7 +283,7 @@ void draw() {
     for (int p = 0; p < player.length; p++) {
       ability(p);
       player[p].move(playerSpeed[p], betaAngles[p]);
-      player[p].display(backgroundColor, abilityCounter[p]);
+      player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
     }
 
     //Abbility Player 2
@@ -308,9 +333,24 @@ void draw() {
     }
 
 
-    //Game Time Management
+    //Game Over Trigger
     if (gameTimer >= gameLength * 1000) {
       println("GAME OVER");
+      //Score
+      gameTimeScore = millis() - fixedStartTime;
+      //Score Longest
+      if (gameTimeScore > gameTimeHighScore) {
+        gameTimeHighScore = gameTimeScore;
+        String[] currentHighScore = { str(gameTimeHighScore) };
+        saveStrings(highScoreFile, currentHighScore);
+      }
+      //Score Shortest
+      if (gameTimeScore < gameTimeLowScore) {
+        gameTimeLowScore = gameTimeScore;
+        String[] currentLowScore = { str(gameTimeLowScore) };
+        saveStrings(lowScoreFile, currentLowScore);
+      }
+
       currentState = State.ENDSCREEN;
       setupStart();
     }
@@ -396,7 +436,7 @@ void draw() {
       }
 
       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
-      player[p].display(backgroundColor, abilityCounter[p]);
+      player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
 
       //wenn shake grösser als shake_threashold dann ability auslösen
       if ((shake[p] >=shake_threashold[p])&& abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
@@ -450,33 +490,33 @@ void draw() {
     break;
 
   case ENDSCREEN:
-  
+
     ScreenTimer = millis() - startScreenTime;
-    
-    if(ScreenTimer / 1000 > ScreenTimerSeconds){
+
+    if (ScreenTimer / 1000 > ScreenTimerSeconds) {
       ScreenTimerSeconds++;
     }
-    
+
     println(ScreenTimerSeconds);
-    
+
     backgroundColor = playerColor[1];
     Background.display(width/2, height/2, screenLength, ScreenTimerSeconds * 1000);
 
     textAlign(CENTER);
-    fill(playerColor[0]);
+    fill(255);
     textFont (titleFont);
     textSize(20);
     text("LIFESPAN", width/2, height/4);
-    textSize(50);
-    text("XXX S", width/2, height/4+50);
+    textSize(100);
+    text(gameTimeScore / 1000 + " s", width/2, height/4+85);
     textSize(20);
     text("LONGEST", width/4, height - (height/4));
-    text("XXX S", width/4, height - (height/4)+25);
+    text(gameTimeHighScore / 1000 + " s", width/4, height - (height/4)+25);
     text("SHORTEST", width/4*3, height - (height/4));
-    text("XXX S", width/4*3, height - (height/4)+25);
+    text(gameTimeLowScore / 1000 + " s", width/4*3, height - (height/4)+25);
     textFont (mainFont);
-    
-    if(ScreenTimer >= screenLength * 1000){
+
+    if (ScreenTimer >= screenLength * 1000) {
       println("RUN AGAIN");
       currentState = State.MAIN_MENUE;
       setupStart();
@@ -619,7 +659,7 @@ void keyPressed() {
       }
 
       //Is shaking
-      if (keyCode == playerKeyInputs[p][2] && abilityCounter[p] > 0) {
+      if (keyCode == playerKeyInputs[p][2] && abilityCounter[p] > 0 && abilityCounter[p] >= abilityNeeded[p] ) {
         isShaking[p] = true;
       }
     }
@@ -654,7 +694,7 @@ void shake() {
         shakeCooldown[p] = true;
         abilityUse[p] = true;
         if (abilityCounter[p] != 0) {
-          abilityCounter[p]--;
+          abilityCounter[p] -= abilityNeeded[p];
         }
       }
     } else if (abilityCounter[p] == abilityCounterCap[p]) {

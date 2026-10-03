@@ -2,7 +2,7 @@ class Player {
 
   void move (float speed, float angle) {
   };
-  void display (color bg, int abilityCount) {
+  void display (color bg, int abilityCount, int needed) {
   }
   void explosion (float expansion, float durationTime, float duration) {
   }
@@ -67,7 +67,7 @@ class PlayerSmall extends Player {
 
   float rotation;
 
-  void display (color backgroundColor, int abilityCount) {
+  void display (color backgroundColor, int abilityCount, int needed) {
     pushMatrix();
     noStroke();
     translate(xPos, yPos);
@@ -83,10 +83,16 @@ class PlayerSmall extends Player {
 
     for (int i = 1; i < abilityCount + 1; i++) {
       pushMatrix();
+      stroke(0);
+      if (abilityCount < needed){
+        strokeWeight(0);
+      } else {
+        strokeWeight(5);
+      }
       translate(xPos, yPos);
       fill(playerColor);
       rotate(((360 / 3) * i) - rotation);
-      circle(0, 35, playerSize / 4);
+      circle(0, 35, playerSize / 7);
       popMatrix();
     }
     
@@ -178,7 +184,7 @@ class PlayerBig extends Player {
     }
   }
 
-  void display (color backgroundColor, int abilityCount) {
+  void display (color backgroundColor, int abilityCount, int needed) {
     pushMatrix();
     translate(xPos, yPos);
     noStroke();
@@ -195,7 +201,7 @@ class PlayerBig extends Player {
       translate(xPos, yPos);
       fill(playerColor);
       stroke(playerColor);
-      if (abilityCount < 8){
+      if (abilityCount < needed){
         strokeWeight(0);
       } else {
         strokeWeight(5);
