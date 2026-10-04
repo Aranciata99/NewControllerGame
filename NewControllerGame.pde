@@ -196,6 +196,8 @@ void setupStart() {
   abilityCounter[1] = 0;
   shakeState[0] = 0;
   shakeState[1] = 0;
+  abilityUse[0] = false;
+  abilityUse[1] = false;
   startTime = millis();
   fixedStartTime = millis();
   startScreenTime = millis();
@@ -393,6 +395,9 @@ void draw() {
   case PLAY_CONTROLLER:
 
     update_background();
+    
+    //Timer
+    gameTimer = millis() - startTime;
 
     if (!poti_value_1.isEmpty()) {
       //Convert Input String to Int
@@ -439,7 +444,7 @@ void draw() {
       player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
 
       //wenn shake grösser als shake_threashold dann ability auslösen
-      if ((shake[p] >=shake_threashold[p])&& abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
+      if ((shake[p] >= shake_threashold[p]) && abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
         abilityUse[p] = true;
 
         //cooldwon wird gestartet
@@ -462,8 +467,49 @@ void draw() {
 
     //Collectibles
     //displayCollectibles
-    for (Collectible c : collectible) {
+    for (int i = collectible.size() - 1; i >= 0; i--) {
+      Collectible c = collectible.get(i);
       c.display();
+
+      //Colliders
+      if (dist(c.xColPos, c.yColPos, player[0].x, player[0].y) < playerSize[0]) {
+        collectible.remove(i);
+        if (abilityCounter[0] < abilityCounterCap[0]) {
+          abilityCounter[0]++;
+        }
+        startTime += timeSafe * 1000;
+      }
+    }
+    
+    //Enemy Collider
+    //Explosion Collider
+    if (dist(player[0].x, player[0].y, player[1].x, player[1].y) < playerSize[1] * explosionColliderHitboxFactor) {
+      startTime -= timeSafe * 50;
+      backgroundColor = (playerColor[1]);
+    } else {
+      backgroundColor = 255;
+    }
+    
+    //Game Over Trigger
+    if (gameTimer >= gameLength * 1000) {
+      println("GAME OVER");
+      //Score
+      gameTimeScore = millis() - fixedStartTime;
+      //Score Longest
+      if (gameTimeScore > gameTimeHighScore) {
+        gameTimeHighScore = gameTimeScore;
+        String[] currentHighScore = { str(gameTimeHighScore) };
+        saveStrings(highScoreFile, currentHighScore);
+      }
+      //Score Shortest
+      if (gameTimeScore < gameTimeLowScore) {
+        gameTimeLowScore = gameTimeScore;
+        String[] currentLowScore = { str(gameTimeLowScore) };
+        saveStrings(lowScoreFile, currentLowScore);
+      }
+
+      currentState = State.ENDSCREEN;
+      setupStart();
     }
 
     //Debug Text
