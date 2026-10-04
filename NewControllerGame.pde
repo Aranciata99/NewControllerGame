@@ -23,7 +23,7 @@ int [] shake = {0, 0};
 int controllerInput_2;
 int controllerInput_1 = 0;
 boolean[] abilityCooldownInactive_controller =  {true, true};
-int [] shake_threashold = {200, 200};
+int [] shake_threashold = {50, 100};
 
 
 
@@ -34,7 +34,7 @@ int[] abilityCounter = { 0, 0 };
 int[] abilityCounterCap = { 10, 8};
 int[] abilityNeeded = {3, abilityCounterCap[1]};
 int abilityP2Timer = 0;
-int abilityCooldownP2 = 300;
+int abilityCooldownP2 = 500;
 //Shaking
 boolean[] isShaking = { false, false };
 boolean[] shakeCooldown = { false, false };
@@ -55,8 +55,8 @@ int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 47 /*— R*/}, { 83 /*W*/, 
 
 //Placeholder Key Input Controll
 float[] increaseSteps = { 0.5, 0.5 };
-float maxBetaAngle = 2;
-float minBetaAngle = -2;
+float maxBetaAngle = 3.5;
+float minBetaAngle = -3.5;
 
 //Imput Numbers
 String line;
@@ -76,8 +76,8 @@ Background Background;
 
 //Spawn Timer
 int[][] collectableSpawnTime = {{0, 0, 0}, {0, 0, 0}}; //Current, Next
-int minSpawnTime = 5000;
-int maxSpawnTime = 10000;
+int minSpawnTime = 2500;
+int maxSpawnTime = 7500;
 
 //Game Sate
 boolean keyboardEnable = false;
@@ -95,6 +95,10 @@ int screenLength = 10;
 int startScreenTime = millis();
 int ScreenTimer;
 int ScreenTimerSeconds = 0;
+
+//HomeScreenIdle
+
+int menueIldeDirection = 1; 
 
 //Score
 float gameTimeScore;
@@ -149,7 +153,8 @@ void setup() {
   setupStart();
 
   //Window Setup
-  size(1400, 900);
+  //size(1400, 900);
+  fullScreen();
 
   //Store current Time
   for (int i = 0; i < collectableSpawnTime[0].length; i++) {
@@ -202,6 +207,10 @@ void setupStart() {
   fixedStartTime = millis();
   startScreenTime = millis();
   ScreenTimerSeconds = 0;
+  isShaking[0] = false;
+  isShaking[1] = false;
+  shakeCooldown[0] = false;
+  shakeCooldown[1] = false;
   for (int i = collectible.size() - 1; i >= 0; i--) {
     collectible.remove(i);
   }
@@ -232,20 +241,54 @@ void draw() {
     textSize(300);
     text("PUFFER", width/2, height/2);
     text("HUNT", width/2, height/2 + 230);
-    textSize(20);
-    text("SHAKE CONTROLLER TO START", width/2, height-100);
+    textSize(50);
+    text("SHAKE A CONTROLLER TO START", width/2, height-200);
     textFont (mainFont);
-
-
+    
     Background.display(width/2, height/2, gameLength, menueTimer*100);
     menueTimer += increaseMenueBG;
     increaseMenueBG += increaseMenueBGSpeed;
-    if (menueTimer > gameLength*10 || menueTimer < 0) {
+
+    //Display Player
+    for (int p = 0; p < player.length; p++) {
+      ability(p);
+      player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
+    }
+    player[0].move(playerSpeed[0], 2 * menueIldeDirection);
+    
+    player[1].move(playerSpeed[1], 1);
+    
+    if (abilityCounter[1] < abilityCounterCap[1]) {
+      if (abilityP2Timer < abilityCooldownP2/8) {
+        abilityP2Timer++;
+      } else {
+        abilityCounter[1]++;
+        abilityP2Timer = 0;
+      }
+    }
+    
+    if(abilityCounter[1] == abilityCounterCap[1]){
+      abilityUse[1] = true;
+      abilityCounter[1] = 0;
+    }
+    
+    //Collider
+    if (dist(player[0].x, player[0].y, player[1].x, player[1].y) < playerSize[1] * explosionColliderHitboxFactor) {
+      backgroundColor = (playerColor[1]);
+    } else {
+      backgroundColor = 255;
+    }
+    
+    
+    if (menueTimer
+      > gameLength*10 || menueTimer < 0) {
       increaseMenueBG *= -1;
     }
     if (increaseMenueBG > 1 || increaseMenueBG < 0) {
       increaseMenueBGSpeed *= -1;
     }
+    
+    //START GAME WHEN SHAKED
 
     if (shakeState[1] >= shakeCap[1]) {
       shakeState[1] = shakeCap[1]+1;
@@ -395,7 +438,7 @@ void draw() {
   case PLAY_CONTROLLER:
 
     update_background();
-    
+
     //Timer
     gameTimer = millis() - startTime;
 
@@ -423,6 +466,7 @@ void draw() {
           abilityCooldownInactive_controller[p]=true;
         }
       }
+
       ability(p);
 
       //slow Down Big when shaked controller version
@@ -450,20 +494,34 @@ void draw() {
         //cooldwon wird gestartet
         abilityCooldownInactive_controller[p] = false;
 
-        if (abilityCounter[p] != 0) {
-          abilityCounter[p]--;
+        if (p == 1) {
+          abilityCounter[1] = 0;
+        } else {
+          if (abilityCounter[p] != 0) {
+            abilityCounter[p] -= abilityNeeded[0];
+          }
         }
       }
     }
 
-    for (int c = 0; c < collectableSpawnTime[0].length; c++) {
-      if (millis() - collectableSpawnTime[0][c] >= collectableSpawnTime[1][c]) {
-        spawnCollectible(c);
-        //Next Spawn
-        collectableSpawnTime[0][c] = millis();//also update the stored time
-        collectableSpawnTime[1][c] = int(random(minSpawnTime, maxSpawnTime));
+    //Ability Player 2 Timer
+
+    if (abilityCounter[1] < abilityCounterCap[1]) {
+      if (abilityP2Timer < abilityCooldownP2/8) {
+        abilityP2Timer++;
+      } else {
+        abilityCounter[1]++;
+        abilityP2Timer = 0;
       }
-    };
+    }
+
+    //Collectibles
+    if (millis() - collectableSpawnTime[0][1] >= collectableSpawnTime[1][1]) {
+      spawnCollectible(1);
+      //Next Spawn
+      collectableSpawnTime[0][1] = millis();//also update the stored time
+      collectableSpawnTime[1][1] = int(random(minSpawnTime, maxSpawnTime));
+    }
 
     //Collectibles
     //displayCollectibles
@@ -480,7 +538,7 @@ void draw() {
         startTime += timeSafe * 1000;
       }
     }
-    
+
     //Enemy Collider
     //Explosion Collider
     if (dist(player[0].x, player[0].y, player[1].x, player[1].y) < playerSize[1] * explosionColliderHitboxFactor) {
@@ -489,7 +547,7 @@ void draw() {
     } else {
       backgroundColor = 255;
     }
-    
+
     //Game Over Trigger
     if (gameTimer >= gameLength * 1000) {
       println("GAME OVER");
@@ -551,15 +609,15 @@ void draw() {
     textAlign(CENTER);
     fill(255);
     textFont (titleFont);
-    textSize(20);
-    text("LIFESPAN", width/2, height/4);
-    textSize(100);
-    text(gameTimeScore / 1000 + " s", width/2, height/4+85);
-    textSize(20);
-    text("LONGEST", width/4, height - (height/4));
-    text(gameTimeHighScore / 1000 + " s", width/4, height - (height/4)+25);
-    text("SHORTEST", width/4*3, height - (height/4));
-    text(gameTimeLowScore / 1000 + " s", width/4*3, height - (height/4)+25);
+    textSize(60);
+    text("SURVIVED", width/2, height/4);
+    textSize(250);
+    text(int(gameTimeScore / 1000) + " s", width/2, height/4+220);
+    textSize(60);
+    text("LONGEST AVOIDENCE", width/4, height - (height/4));
+    text(int(gameTimeHighScore / 1000) + " s", width/4, height - (height/4)+80);
+    text("FASTEST HUNT", width/4*3, height - (height/4));
+    text(int(gameTimeLowScore / 1000) + " s", width/4*3, height - (height/4)+80);
     textFont (mainFont);
 
     if (ScreenTimer >= screenLength * 1000) {

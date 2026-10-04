@@ -1,10 +1,11 @@
 /* Notes
 
+  – Shake Controller to start
+
    ! Essentials !
   
   – Soft Start on Game Start –> Fade in Speed up
   – Soft End on Game Over –> Slow down –> fade-out
-  – Design Type etc? Anpassen auf Ausstellung und nicht gut jetzt! 
   
     Plus
   

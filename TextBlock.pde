@@ -7,7 +7,7 @@ class TextBlock {
   void display (String[] text, float x, float y) {
     textAlign(LEFT);
     textSize(fontSize);
-    fill(textColor);
+    fill(textColor, 0);
     for (int i = 0; i < text.length; i++) {
       text(text[i], x, y + (i * lineHeight));
     }
