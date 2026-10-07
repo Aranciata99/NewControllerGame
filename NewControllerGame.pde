@@ -462,7 +462,7 @@ void draw() {
     text("TUTORIAL", width/2, height/2-250);
     textSize(80);
     text("GREY PREY", width/2, height/2-130);
-    textFont (mainFont);§1
+    textFont (mainFont);
   break;
   
 
