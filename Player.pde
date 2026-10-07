@@ -49,7 +49,11 @@ class PlayerSmall extends Player {
     } else if (xPos < 0 + playerSize/2) {
       xPos += 0.1;
     } else {
-      xPos += (Math.sin(betaAngle*Math.PI/180))/speed;
+      if(hardmode){
+        xPos += (Math.sin(betaAngle*Math.PI/180))/speed;
+      }else{
+        xPos += (Math.sin(angle*Math.PI/180))/speed;
+      }
     }
 
     if (yPos > height - playerSize/2) {
@@ -57,7 +61,15 @@ class PlayerSmall extends Player {
     } else if (yPos < 0 + playerSize/2) {
       yPos += 0.1;
     } else {
-      yPos += (Math.cos(betaAngle*Math.PI/180))/speed;
+      
+      
+      if(hardmode){
+        //hardmode
+         yPos += (Math.cos(betaAngle*Math.PI/180))/speed;
+      }else{
+        //easymode
+         yPos += (Math.cos(angle*Math.PI/180))/speed;
+      }
     }
 
     if (betaAngle >=360) {
@@ -71,7 +83,15 @@ class PlayerSmall extends Player {
     pushMatrix();
     noStroke();
     translate(xPos, yPos);
-    rotate(radians(-betaAngle));
+    //hardmode kopfausrichtung
+    if(hardmode){
+      //hardmode
+      rotate(radians(-betaAngle));
+    }else{
+      //easymode
+      rotate(radians(-globAngle));
+    }
+    
     fill(playerColor);
     circle(0, 0, playerSize);
     //Head

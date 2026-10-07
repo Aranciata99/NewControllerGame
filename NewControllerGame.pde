@@ -22,9 +22,8 @@ float[] betaAngles = { 0.0, 0.0 };
 int [] shake = {0, 0};
 int controllerInput_2;
 int controllerInput_1 = 0;
-boolean[] abilityCooldownInactive_controller =  {true, true};
-int [] shake_threashold = {50, 100};
-
+int [] shake_threashold = {25, 80};
+public boolean hardmode = false;
 
 
 
@@ -39,12 +38,12 @@ int abilityCooldownP2 = 500;
 boolean[] isShaking = { false, false };
 boolean[] shakeCooldown = { false, false };
 boolean[] abilityUse = { false, false };
-int[] shakeCap = { 150, 100 };
+int[] shakeCap = { 30, 100 };
 int[] shakeState = { shakeCap[0]-1, shakeCap[1]-1 };
 //Explosion – Collider
 float explosionColliderHitboxFactor = 1;
 //Speed
-float[] playerSpeedAbs = { 0.25, 0 };
+float[] playerSpeedAbs = { 0.3, 0 };
 float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
 //Size
 float[] playerSize = { 40, 80 };
@@ -55,8 +54,8 @@ int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 47 /*— R*/}, { 83 /*W*/, 
 
 //Placeholder Key Input Controll
 float[] increaseSteps = { 0.5, 0.5 };
-float maxBetaAngle = 3.5;
-float minBetaAngle = -3.5;
+float maxBetaAngle = 3;
+float minBetaAngle = -3;
 
 //Imput Numbers
 String line;
@@ -116,7 +115,7 @@ String[] text;
 
 //Sate machine
 public enum State {
-  MAIN_MENUE,
+    MAIN_MENUE,
     PLAY_KEYBOARD,
     PLAY_CONTROLLER,
     ENDSCREEN,
@@ -133,7 +132,8 @@ float menueTimer = 0;
 float increaseMenueBG = 0.1;
 float increaseMenueBGSpeed = 0.01;
 
-boolean fadeIn = false;
+boolean fadeIn_key = false;
+boolean fadeIn_controller = false;
 
 State currentState;
 
@@ -223,10 +223,25 @@ void setupStart() {
 void draw() {
   //Draw Background
   background(backgroundColor);
-
+  
+  //----übertragung von bluetoothcontroler werte zu lokalen variablen------
+    if (!poti_value_1.isEmpty()) {
+      //Convert Input String to Int
+      controllerInput_1 = Integer.parseInt(poti_value_1);
+      shake[0] = Integer.parseInt(shake_value_1);
+    }
+    if (!poti_value_2.isEmpty()) {
+      //Convert Input String to Int
+      controllerInput_2 = Integer.parseInt(poti_value_2);
+      shake[1] = Integer.parseInt(shake_value_2);
+    }
+    
   switch(currentState) {
     //startfenster
     //menue frage controller o oder p
+    
+    
+    
   case MAIN_MENUE:
 
     backgroundColor = 255;
@@ -288,11 +303,11 @@ void draw() {
       increaseMenueBGSpeed *= -1;
     }
     
-    //START GAME WHEN SHAKED
+    //----START GAME WHEN SHAKED KEYBOARD---
 
     if (shakeState[1] >= shakeCap[1]) {
       shakeState[1] = shakeCap[1]+1;
-      fadeIn = true;
+      fadeIn_key = true;
     }
 
     if ( fadeIn() ) {
@@ -301,9 +316,21 @@ void draw() {
       shakeState[1] = 0;
       gameIsLoading = true;
       currentState = State.PLAY_KEYBOARD;
-    };
+    }
 
-
+     //----starte spiel wenn controller small oder big über 50 geschütelt werden----
+    if (shake[0] >= 50 || shake[1]>=50) {
+      fadeIn_controller = true;
+    }
+    if (fadeIn_controller) {
+      setupStart();
+      shake[0] = 0;
+      shake[1] = 0;
+      currentState = State.PLAY_CONTROLLER;
+      fadeIn_controller = false;
+    }
+    
+    //----Text---
 
     text = new String[]{
       "START GAME",
@@ -436,37 +463,30 @@ void draw() {
 
     //wen mit BLE Controller gespielt wird
   case PLAY_CONTROLLER:
-
+      
+      
     update_background();
 
     //Timer
     gameTimer = millis() - startTime;
 
-    if (!poti_value_1.isEmpty()) {
-      //Convert Input String to Int
-      controllerInput_1 = Integer.parseInt(poti_value_1);
-      shake[0] = Integer.parseInt(shake_value_1);
-    }
-    if (!poti_value_2.isEmpty()) {
-      //Convert Input String to Int
-      controllerInput_2 = Integer.parseInt(poti_value_2);
-      shake[1] = Integer.parseInt(shake_value_2);
-    }
+    
 
-    //konvertierung von potentiometer input zu angle output
-    potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
+
+    //-----konvertierung von potentiometer input zu angle output relativ zu spieler-----
     potiConvertetAngle[1] = minBetaAngle + (controllerInput_2*potiSteps);
+
+    //hardmode poti angle direkt auf 0 - 360 grad gemaped
+    if(hardmode){
+      //hardmode
+      potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
+    }else{
+      //easymode
+      potiConvertetAngle[0] = (controllerInput_1*360/940);
+    }
 
 
     for (int p = 0; p < player.length; p++) {
-      //also wenn cooldown aktiv ist
-      //shake wert muss zuerst unter 30 gelangen, dass nochaml eine ability ausgelöst werden kann
-      if (abilityCooldownInactive_controller[p]==false) {
-        if (shake[p]<=30) {
-          abilityCooldownInactive_controller[p]=true;
-        }
-      }
-
       ability(p);
 
       //slow Down Big when shaked controller version
@@ -484,27 +504,30 @@ void draw() {
         }
       }
 
+      //---initialisierung von spielern und speed vorgabe--
       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
       player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
 
+      
+     // -----Abilitys------
+     
+      //player small ability auslösen ab 3
       //wenn shake grösser als shake_threashold dann ability auslösen
-      if ((shake[p] >= shake_threashold[p]) && abilityCooldownInactive_controller[p] && abilityCounter[p]>0) {
-        abilityUse[p] = true;
-
-        //cooldwon wird gestartet
-        abilityCooldownInactive_controller[p] = false;
-
-        if (p == 1) {
-          abilityCounter[1] = 0;
-        } else {
-          if (abilityCounter[p] != 0) {
-            abilityCounter[p] -= abilityNeeded[0];
-          }
+       if ((shake[0] >= shake_threashold[0]) && abilityCounter[0]>=3) {
+        abilityUse[0] = true;
+        abilityCounter[0] -= abilityNeeded[0];
+      }
+      
+      //player big ability auslösen und auf null setzen
+      if ((shake[1] >= shake_threashold[1]) && abilityCounter[1]>0) {
+        abilityUse[1] = true;
+        abilityCounter[1] = 0;
         }
       }
-    }
+ 
 
-    //Ability Player 2 Timer
+
+    //---Ability Player big Timer---
 
     if (abilityCounter[1] < abilityCounterCap[1]) {
       if (abilityP2Timer < abilityCooldownP2/8) {
@@ -515,7 +538,7 @@ void draw() {
       }
     }
 
-    //Collectibles
+    //-----Collectibles------
     if (millis() - collectableSpawnTime[0][1] >= collectableSpawnTime[1][1]) {
       spawnCollectible(1);
       //Next Spawn
@@ -551,6 +574,8 @@ void draw() {
     //Game Over Trigger
     if (gameTimer >= gameLength * 1000) {
       println("GAME OVER");
+      //----Reset werte----
+      
       //Score
       gameTimeScore = millis() - fixedStartTime;
       //Score Longest
@@ -594,9 +619,25 @@ void draw() {
     break;
 
   case ENDSCREEN:
-
+   //----reset der spielvariablen-------
+    for (int p = 0; p < player.length; p++) {
+      abilityCounter[p] = 0;
+      abilityUse[p]= false;
+    }
+    //-----reset ability von player Big-----
+    ability(1); //führt reset aus
+    
+    //hitbox wieder klein machen zu 1
+        explosionColliderHitboxFactor = 1;
+        abilityUse[1] = false;
+        explosionExpansion = playerSize[1];
+        
+        // reset explosionTimer
+        explosionDurationTimer = explosionDuration;
+    
+    
+    //----- screen handler------
     ScreenTimer = millis() - startScreenTime;
-
     if (ScreenTimer / 1000 > ScreenTimerSeconds) {
       ScreenTimerSeconds++;
     }
@@ -706,7 +747,7 @@ void startBluetoothBridge() {
 //Key Inputs
 //––
 
-//UI StartScreen
+//-------UI StartScreen-------------
 void keyPressed() {
   //Choose BLECONTROLLER or KEYBOARD for game
   //p = 80
@@ -850,9 +891,12 @@ void ability(int p) {
         explosionDurationTimer -= 3;
         player[p].explosion(explosionExpansion, explosionDurationTimer, explosionDuration);
       } else {
+        //hitbox wieder klein machen zu 1
         explosionColliderHitboxFactor = 1;
         abilityUse[p] = false;
-        explosionExpansion = playerSize[0];
+        explosionExpansion = playerSize[1];
+        
+        // reset explosionTimer
         explosionDurationTimer = explosionDuration;
       }
     }
@@ -912,7 +956,7 @@ float fadeMultiplicator = 0.001;
 
 boolean fadeIn() {
 
-  if (fadeIn) {
+  if (fadeIn_key) {
     if (fadeSize < 100) {
       fadeSize += fadeMultiplicator;
       fadeMultiplicator *= 1.1;
@@ -920,7 +964,19 @@ boolean fadeIn() {
       fadeSize = 0;
       fadeMultiplicator = 0.001;
       setupStart();
-      fadeIn = false;
+      fadeIn_key = false;
+      return true;
+    }
+  }
+  if (fadeIn_controller) {
+    if (fadeSize < 100) {
+      fadeSize += fadeMultiplicator;
+      fadeMultiplicator *= 1.1;
+    } else {
+      fadeSize = 0;
+      fadeMultiplicator = 0.001;
+      setupStart();
+      fadeIn_controller = false;
       return true;
     }
   }
