@@ -25,7 +25,11 @@ int controllerInput_1 = 0;
 int [] shake_threashold = {25, 80};
 public boolean hardmode = false;
 
-
+//tutorial small
+boolean movement_tutorial_complete = false;
+boolean escape_tutorial_complete = false;
+int spawn_collectibles = 0;
+int delay = 0;
 
 //Player Values
 //Abilities
@@ -116,6 +120,8 @@ String[] text;
 //Sate machine
 public enum State {
     MAIN_MENUE,
+    SMALL_TUTORIAL,
+    BIG_TUTORIAL,
     PLAY_KEYBOARD,
     PLAY_CONTROLLER,
     ENDSCREEN,
@@ -178,9 +184,10 @@ void setup() {
 
 
   //State Setup
-  currentState = State.MAIN_MENUE;
+  //currentState = State.MAIN_MENUE;
   //currentState = State.PLAY_KEYBOARD;
   //currentState = State.ENDSCREEN;
+  currentState = State.SMALL_TUTORIAL;
   //screensetting
   surface.setResizable(true);
   //Start Input Script
@@ -243,7 +250,12 @@ void draw() {
     
     
   case MAIN_MENUE:
-
+    // ---reset values---
+    movement_tutorial_complete = false;
+    escape_tutorial_complete = false;
+    spawn_collectibles = 0;
+    //----
+    
     backgroundColor = 255;
 
     //Shake Value
@@ -341,6 +353,118 @@ void draw() {
     TextBlock.display(text, generallMargin, generallMargin);
 
     break;
+    
+  case SMALL_TUTORIAL:
+    
+    textAlign(CENTER);
+    fill(playerColor[1], 255 - shakeState[1]*3);
+    textFont (titleFont);
+    textSize(150);
+    text("TUTORIAL", width/2, height/2-250);
+    textSize(80);
+    text("GREY PREY", width/2, height/2-130);
+    
+    //----movement tutorial---
+    if(movement_tutorial_complete != true){
+      if(hardmode){
+          //hardmode
+          textSize(50);
+          text("your in hardmode that means the movement of the small player is harder", width/2, height-280);
+          text("give it all u got!!!", width/2, height-200);
+          }else{
+          //easymode
+          textSize(50);
+          text("turn the knob to move but be gentle", width/2, height-350);
+          text("the controller dosent turn more then a full rotation", width/2, height-280);
+          text("try catching that small black ball", width/2, height-120);
+        }
+        if(spawn_collectibles == 0){
+           spawnCollectible(1);
+           spawn_collectibles++;
+        }
+       
+        display_Collectibles();
+        
+        // wenn ein punkt eingesamelt movemnt tutorial bestanden
+        if(abilityCounter[0]>0){
+          movement_tutorial_complete = true;
+        }
+        
+        //-----
+        
+    }else if(movement_tutorial_complete == true && escape_tutorial_complete !=true){
+     //----escape tutorial---
+        textSize(50);
+        text("now catch two more balls and then shake to activate", width/2, height-280);
+        text(" the escape feature", width/2, height-200);
+        if(spawn_collectibles <= 2){
+           spawnCollectible(1);
+           spawn_collectibles++;
+           
+        }
+       
+        display_Collectibles();
+        
+        // wenn escape ausgeführt wurde zum nächsten state gehen
+         if(abilityCounter[0]==0){
+           if(delay>=80){
+             currentState = State.BIG_TUTORIAL;
+           }
+           delay ++;
+         }
+    }
+ 
+    textFont (mainFont);
+    
+    //Display Player small
+    for (int p = 0; p < 1; p++) {
+      ability(p);
+      player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
+    }
+    
+    
+     //-----konvertierung von potentiometer input zu angle output relativ zu spieler-----
+    //hardmode poti angle direkt auf 0 - 360 grad gemaped
+    if(hardmode){
+      //hardmode
+      potiConvertetAngle[0] = minBetaAngle + (controllerInput_1*potiSteps);
+    }else{
+      //easymode
+      potiConvertetAngle[0] = (controllerInput_1*360/940);
+    }
+     // -----Abilitys------
+     
+      //player small ability auslösen ab 3
+      //wenn shake grösser als shake_threashold dann ability auslösen
+      
+      //für testing "-" keycode
+      if(keyCode == 47){
+        shake[0] = shake_threashold[0];
+      }
+       if ((shake[0] >= shake_threashold[0]) && abilityCounter[0]>=3) {
+        abilityUse[0] = true;
+        abilityCounter[0] -= abilityNeeded[0];
+      }
+     ability(0); 
+    // jetzt noch mit keys für test
+    player[0].move(playerSpeed[0], betaAngles[0]);
+    //---
+    //player[0].move(playerSpeed[0], potiConvertetAngle[0]); // für controller
+   
+    
+  break;
+  
+  case BIG_TUTORIAL:
+  textAlign(CENTER);
+    fill(playerColor[1], 255 - shakeState[1]*3);
+    textFont (titleFont);
+    textSize(150);
+    text("TUTORIAL", width/2, height/2-250);
+    textSize(80);
+    text("GREY PREY", width/2, height/2-130);
+    textFont (mainFont);§1
+  break;
+  
 
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
@@ -778,29 +902,54 @@ void keyPressed() {
 
   //Gameplay Keyboard Inputs
   //nur, wenn mit Keyboard gespielt wird
-  if (currentState == State.PLAY_KEYBOARD) {
+  if (currentState == State.PLAY_KEYBOARD || currentState == State.BIG_TUTORIAL || currentState == State.SMALL_TUTORIAL) {
 
     for (int p = 0; p < player.length; p++) {
       if (keyCode == playerKeyInputs[p][0] && abilityUse[p] == false) {
         if (p == 1) {
           isShaking[p] = false;
         }
+        // bewegung für small player 
+        if(p==0){
+        if (betaAngles[p] < 360) {
+          betaAngles[p] += 20;
+        } else {
+          betaAngles[p] = 0;
+        }
+      }
+       //-------
+        
+       // bewung von big player
+        if(p==1){
         if (betaAngles[p] < maxBetaAngle) {
           betaAngles[p] += increaseSteps[p];
         } else {
           betaAngles[p] = maxBetaAngle;
         }
       }
+      
+      //-------
+      }
 
       if (keyCode == playerKeyInputs[p][1] && abilityUse[p] == false) {
         if (p == 1) {
           isShaking[p] = false;
         }
-        if (betaAngles[p] > minBetaAngle) {
-          betaAngles[p] -= increaseSteps[p];
+         // bewegung für small player 
+        if (betaAngles[0] > 0) {
+          betaAngles[0] -= 20;
         } else {
-          betaAngles[p] = minBetaAngle;
+          betaAngles[0] = 360;
         }
+       //-------
+       
+       // bewegung für big player
+        if (betaAngles[1] > minBetaAngle) {
+          betaAngles[1] -= increaseSteps[1];
+        } else {
+          betaAngles[1] = minBetaAngle;
+        }
+         //-------
       }
 
       //Is shaking
@@ -979,11 +1128,31 @@ boolean fadeIn() {
       fadeIn_controller = false;
       return true;
     }
-  }
+  }  
 
   fill(255);
   noStroke();
   circle(width/2, height/2, width/100*fadeSize);
 
   return false;
+}
+
+void display_Collectibles(){
+     //Collectibles
+    //displayCollectibles
+    for (int i = collectible.size() - 1; i >= 0; i--) {
+      Collectible c = collectible.get(i);
+      c.display();
+
+      //Colliders
+      if (dist(c.xColPos, c.yColPos, player[0].x, player[0].y) < playerSize[0]) {
+        collectible.remove(i);
+        if (abilityCounter[0] < abilityCounterCap[0]) {
+          abilityCounter[0]++;
+        }
+        startTime += timeSafe * 1000;
+      }
+    }
+
+
 }
