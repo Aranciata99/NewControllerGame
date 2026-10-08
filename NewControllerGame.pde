@@ -22,7 +22,7 @@ float[] betaAngles = { 0.0, 0.0 };
 int [] shake = {0, 0};
 int controllerInput_2;
 int controllerInput_1 = 0;
-int [] shake_threashold = {25, 80};
+int [] shake_threashold = {20, 20};
 public boolean hardmode = false;
 
 //tutorial small
@@ -30,6 +30,7 @@ boolean movement_tutorial_complete = false;
 boolean escape_tutorial_complete = false;
 int spawn_collectibles = 0;
 int delay = 0;
+boolean start_delay = false;
 
 //Player Values
 //Abilities
@@ -52,7 +53,7 @@ float[] playerSpeed = { playerSpeedAbs[0], playerSpeedAbs[1] };
 //Size
 float[] playerSize = { 40, 80 };
 //Colors
-color[] playerColor = { 0, #ed4d0e }; //#828282
+color[] playerColor = { 0, #ed4d0e,#A9A9A9 }; //#828282
 //Inputs
 int[][] playerKeyInputs = {{ 38 /*UP*/, 40 /*DOWN*/, 47 /*— R*/}, { 83 /*W*/, 87 /*S*/, 32 /*SPACE*/}};
 
@@ -122,6 +123,7 @@ public enum State {
     MAIN_MENUE,
     SMALL_TUTORIAL,
     BIG_TUTORIAL,
+    GOAL_EXPLENETION,
     PLAY_KEYBOARD,
     PLAY_CONTROLLER,
     ENDSCREEN,
@@ -187,7 +189,7 @@ void setup() {
   //currentState = State.MAIN_MENUE;
   //currentState = State.PLAY_KEYBOARD;
   //currentState = State.ENDSCREEN;
-  currentState = State.SMALL_TUTORIAL;
+  currentState = State.GOAL_EXPLENETION;
   //screensetting
   surface.setResizable(true);
   //Start Input Script
@@ -331,7 +333,7 @@ void draw() {
     }
 
      //----starte spiel wenn controller small oder big über 50 geschütelt werden----
-    if (shake[0] >= 50 || shake[1]>=50) {
+    if (shake[0] >= 25 || shake[1]>=25) {
       fadeIn_controller = true;
     }
     if (fadeIn_controller) {
@@ -357,7 +359,7 @@ void draw() {
   case SMALL_TUTORIAL:
     
     textAlign(CENTER);
-    fill(playerColor[1], 255 - shakeState[1]*3);
+    fill(playerColor[2], 255 - shakeState[1]*3);
     textFont (titleFont);
     textSize(150);
     text("TUTORIAL", width/2, height/2-250);
@@ -376,7 +378,7 @@ void draw() {
           textSize(50);
           text("turn the knob to move but be gentle", width/2, height-350);
           text("the controller dosent turn more then a full rotation", width/2, height-280);
-          text("try catching that small black ball", width/2, height-120);
+          text("try catching that small black orb", width/2, height-120);
         }
         if(spawn_collectibles == 0){
            spawnCollectible(1);
@@ -409,6 +411,10 @@ void draw() {
          if(abilityCounter[0]==0){
            if(delay>=80){
              currentState = State.BIG_TUTORIAL;
+             //---restart variabeln----
+             delay = 0;
+             movement_tutorial_complete = false;
+             escape_tutorial_complete = false;
            }
            delay ++;
          }
@@ -445,9 +451,8 @@ void draw() {
         abilityUse[0] = true;
         abilityCounter[0] -= abilityNeeded[0];
       }
-     ability(0); 
     // jetzt noch mit keys für test
-    player[0].move(playerSpeed[0], betaAngles[0]);
+    player[0].move(playerSpeed[0], potiConvertetAngle[0]);
     //---
     //player[0].move(playerSpeed[0], potiConvertetAngle[0]); // für controller
    
@@ -455,16 +460,161 @@ void draw() {
   break;
   
   case BIG_TUTORIAL:
-  textAlign(CENTER);
-    fill(playerColor[1], 255 - shakeState[1]*3);
+    textAlign(CENTER);
+    fill(playerColor[1]);
     textFont (titleFont);
     textSize(150);
     text("TUTORIAL", width/2, height/2-250);
     textSize(80);
-    text("GREY PREY", width/2, height/2-130);
+    text("ORANGE HUNTER", width/2, height/2-130);
+    textSize(30);
+    fill(playerColor[2]);
+    text("skip tutorial by shaking grey controller", width/2, height-50);
+    fill(playerColor[1]);
     textFont (mainFont);
+    
+    //---movement tutorial---
+    if(movement_tutorial_complete != true){
+    
+      textSize(50);
+      text("turn the knob clock and", width/2, height-320);
+      text("counterclockwhise to move around", width/2, height-270);
+      
+        textSize(30);
+        text("when your ready for the next step,", width/2, height-200);
+        text("shake the orange controller", width/2, height-150);
+        
+      
+      //shake to go to the next step
+      //keytest "_"
+      if (keyCode == 32){
+          movement_tutorial_complete = true;
+      }
+      //wenn geschüttelt mit controller dann movement_tutorial_complete = true;
+      
+      //player big schütteln und auf null setzen, nicht aber angriff auslösen
+      if ((shake[1] >= shake_threashold[1]) && abilityCounter[1]>=8) {
+        abilityCounter[1] = 0;
+        start_delay = true;
+        
+        
+      }
+      
+      if(start_delay == true){
+            delay ++;
+              if(delay>=200){
+                  movement_tutorial_complete = true;
+                   //---restart variabeln----
+                   delay = 0;
+                   start_delay = false;
+               }
+      }
+      
+    //----
+    }else{
+      //---attack tutorial----
+     textSize(30);
+     text("to attack the prey, wait until you automaticly load all 8 orbes around the figure", width/2, height-280);
+     text("then shake to attack", width/2, height-200);
+     
+     
+     //keytest "_"
+     if (keyCode == 47){
+          escape_tutorial_complete = true;
+      }
+     
+     // wenn erfolgreich geschüttelt 
+     //player big ability auslösen und auf null setzen
+      if ((shake[1] >= shake_threashold[1]) && abilityCounter[1]>0) {
+        abilityUse[1] = true;
+        abilityCounter[1] = 0;
+        //tutorial komplet
+        escape_tutorial_complete = true;
+        }
+      
+          //tutorial abgeschlossen und timer starten 
+       if(escape_tutorial_complete==true){
+           if(delay>=200){
+             currentState = State.GOAL_EXPLENETION;
+             //---restart variabeln----
+             delay = 0;
+             movement_tutorial_complete = false;
+             escape_tutorial_complete = false;
+           }
+           delay ++;
+         
+        }
+      ///------
+      }
+    
+    
+    //convert poti für big player
+    potiConvertetAngle[1] = minBetaAngle + (controllerInput_2*potiSteps);
+    
+     //Display Player Big
+     for (int p = 1; p < player.length; p++) {
+      ability(p);
+       player[p].move(playerSpeed[p], potiConvertetAngle[p]);
+      player[p].display(backgroundColor, abilityCounter[p], abilityNeeded[p]);
+     }
+     //Abbility Player 2
+
+    if (abilityCounter[1] < abilityCounterCap[1]) {
+      if (abilityP2Timer < abilityCooldownP2/8) {
+        abilityP2Timer++;
+      } else {
+        abilityCounter[1]++;
+        abilityP2Timer = 0;
+      }
+    }
+    
+    
+     textFont (mainFont);
   break;
   
+  //explenation window
+  case GOAL_EXPLENETION:
+     textAlign(CENTER);
+    fill(playerColor[1]);
+    textFont (titleFont);
+    textSize(100);
+    text("THE GOAL", width/2, height/4);
+    
+    //info Hunter
+    textFont (titleFont);
+    textSize(70);
+    fill(playerColor[1]);
+    text("HUNTER", width/4, height/2-50);
+    textSize(22);
+    text("attack the Prey as often as possible as you can.", width/4, height/2);
+    text("That reduces the time left on the clock as displayed", width/4, height/2+40);
+    text(" on the backround of the game", width/4, height/2+80);
+    text("end the game as fast as possiblel", width/4, height/2+120);
+    
+    //info Prey
+    textSize(70);
+    fill(playerColor[2]);
+    text("PREY",  width/2+width/4, height/2 -50);
+    
+    textSize(22);
+    text("Avoid getting hit by the Hunter to stay", width/2+width/4, height/2);
+    text("allive as long as possible and to because ", width/2+width/4, height/2+40);
+    text(" the gameclock in the backround is working against you", width/2+width/4, height/2+80);
+    text("stay alive as long as possible", width/2+width/4, height/2+120);
+    
+    textSize(50);
+    fill(0);
+    text("SHAKE A CONTROLLER TO START", width/2, height-100);
+    textFont (mainFont);
+    
+    //shake to start the game
+    for (int p = 0; p < player.length; p++) {
+      if (shake[p] >= shake_threashold[p]){
+          currentState = State.PLAY_CONTROLLER;
+      }
+    }
+    
+  break;
 
     // wenn mit Keyboard gespielt wird
   case PLAY_KEYBOARD:
@@ -643,7 +793,7 @@ void draw() {
       }
       
       //player big ability auslösen und auf null setzen
-      if ((shake[1] >= shake_threashold[1]) && abilityCounter[1]>0) {
+      if ((shake[1] >= shake_threashold[1]) && abilityCounter[1]>=8) {
         abilityUse[1] = true;
         abilityCounter[1] = 0;
         }
@@ -970,6 +1120,7 @@ void keyReleased() {
 
 void shake() {
   for (int p = 0; p < player.length; p++) {
+    
     //slow Down Big when shaked
     if (p == 1 && isShaking[p] && !shakeCooldown[p] && abilityCounter[p] == abilityCounterCap[p]) {
       if (betaAngles[p] > 0.1) {
